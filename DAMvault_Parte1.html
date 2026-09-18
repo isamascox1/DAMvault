@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAMvault — Enterprise Image Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07080c;--bg2:#0d0f16;--bg3:#111420;--bg4:#161924;
+  --surface:#1a1e2e;--surface2:#1f2335;--surface3:#252a3f;
+  --border:#242840;--border2:#2e3450;--border3:#394070;
+  --text:#dde0f0;--text2:#8c92b8;--text3:#565d82;--text4:#363d5c;
+  --accent:#5b7cf6;--accent2:#7b97ff;--accent3:#3d5ce0;--adim:rgba(91,124,246,.12);
+  --green:#1fdb8a;--gdim:rgba(31,219,138,.1);
+  --amber:#f4a832;--adim2:rgba(244,168,50,.1);
+  --red:#f05252;--rdim:rgba(240,82,82,.1);
+  --purple:#b06ef5;--pdim:rgba(176,110,245,.1);
+  --cyan:#22d3ee;--cdim:rgba(34,211,238,.1);
+  --pink:#f06292;
+  --r:10px;--rl:14px;--rxl:20px;
+  --sh:0 4px 20px rgba(0,0,0,.4);--shl:0 8px 40px rgba(0,0,0,.6);
+  font-family:'DM Sans',sans-serif;font-size:14px;
+}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
+
+/* ── LAYOUT ── */
+#app{display:flex;height:100vh;overflow:hidden}
+.sb{width:228px;min-width:228px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s,min-width .3s;overflow:hidden;position:relative;z-index:10}
+.sb.slim{width:58px;min-width:58px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:54px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 18px;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:26px;background:var(--bg)}
+
+/* ── AUTH ── */
+#authWrap{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.auth-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.auth-orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.15}
+.auth-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rxl);padding:40px 36px;width:400px;max-width:94vw;position:relative;z-index:1;animation:fadeUp .4s ease}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-mark{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:14px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff}
+.auth-h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.3px}
+.auth-sub{font-size:12px;color:var(--text3);margin-top:3px}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:var(--r);padding:3px;margin-bottom:22px;gap:3px}
+.atab{flex:1;padding:7px;text-align:center;border-radius:8px;font-size:13px;cursor:pointer;color:var(--text3);transition:all .2s}
+.atab.active{background:var(--surface2);color:var(--text);font-weight:500}
+.fg{margin-bottom:14px}
+.fl{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;letter-spacing:.3px;text-transform:uppercase}
+.fi{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 13px;color:var(--text);font-size:13px;outline:none;transition:border .2s;font-family:'DM Sans',sans-serif}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--text4)}
+.fi.err{border-color:var(--red)}
+.err-msg{font-size:11px;color:var(--red);margin-top:4px;display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;outline:none;white-space:nowrap}
+.btn-p{background:var(--accent);color:#fff;padding:10px 18px}
+.btn-p:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:8px 14px}
+.btn-g:hover{background:var(--surface);color:var(--text);border-color:var(--border3)}
+.btn-d{background:var(--rdim);color:var(--red);border:1px solid rgba(240,82,82,.25);padding:8px 14px}
+.btn-s{background:var(--gdim);color:var(--green);border:1px solid rgba(31,219,138,.25);padding:8px 14px}
+.btn-full{width:100%;padding:11px}
+.btn-ico{width:34px;height:34px;padding:0;border-radius:var(--r);background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:15px}
+.btn-ico:hover{background:var(--surface2);color:var(--text);border-color:var(--border3)}
+.divdr{display:flex;align-items:center;gap:10px;margin:14px 0;font-size:11px;color:var(--text3)}
+.divdr::before,.divdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.oauth-row{display:flex;gap:8px;margin-bottom:16px}
+.oauth-btn{flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:9px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text2);transition:all .2s}
+.oauth-btn:hover{background:var(--surface2);border-color:var(--border3);color:var(--text)}
+.sec-strip{background:rgba(31,219,138,.06);border:1px solid rgba(31,219,138,.15);border-radius:var(--r);padding:9px 12px;font-size:11px;color:rgba(31,219,138,.8);margin-top:14px;display:flex;gap:8px;align-items:center}
+.str-bar{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+.str-fill{height:100%;border-radius:2px;transition:width .3s,background .3s}
+.tfa-grid{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.tfa-d{width:44px;height:52px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);text-align:center;font-size:24px;font-family:'JetBrains Mono',monospace;color:var(--text);outline:none}
+.tfa-d:focus{border-color:var(--accent)}
+
+/* ── SIDEBAR ── */
+.sb-logo{padding:15px 14px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-mark{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.sb-txt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;letter-spacing:-.2px}
+.sb-sub{font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 8px}
+.sb-sec{margin-bottom:18px}
+.sb-lbl{font-size:9px;font-weight:600;color:var(--text4);letter-spacing:1.2px;text-transform:uppercase;padding:0 8px 6px;white-space:nowrap;overflow:hidden}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;cursor:pointer;color:var(--text3);font-size:13px;transition:all .15s;position:relative;white-space:nowrap;overflow:hidden;user-select:none}
+.sb-item:hover{background:var(--surface);color:var(--text2)}
+.sb-item.active{background:var(--adim);color:var(--accent2);font-weight:500}
+.sb-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:55%;background:var(--accent);border-radius:0 2px 2px 0}
+.sb-icon{width:17px;height:17px;flex-shrink:0;stroke:currentColor;fill:none}
+.sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;flex-shrink:0}
+.sb-badge-w{background:var(--adim2);color:var(--amber)}
+.sb-foot{padding:10px 8px;border-top:1px solid var(--border);flex-shrink:0}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px;border-radius:var(--r);cursor:pointer;transition:background .15s}
+.sb-user:hover{background:var(--surface)}
+.av{border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;font-family:'Syne',sans-serif}
+.av-sm{width:28px;height:28px;font-size:10px;border-radius:6px}
+.sb-uname{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-urole{font-size:10px;color:var(--text3)}
+.sb-toggle{margin-left:auto;cursor:pointer;color:var(--text4);flex-shrink:0;font-size:16px}
+.sb.slim .sb-lbl,.sb.slim .sb-item span:not(.sb-badge),.sb.slim .sb-txt,.sb.slim .sb-uinfo,.sb.slim .sb-toggle{display:none}
+.sb.slim .sb-item{padding:9px 12px;justify-content:center}
+.sb.slim .sb-badge{position:absolute;top:4px;right:4px;font-size:8px;padding:1px 4px}
+
+/* ── TOPBAR ── */
+.srch{flex:1;max-width:380px;position:relative}
+.srch input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:7px 12px 7px 34px;color:var(--text);font-size:13px;outline:none;transition:border .2s;font-family:'DM Sans',sans-serif}
+.srch input:focus{border-color:var(--accent)}
+.srch input::placeholder{color:var(--text3)}
+.srch-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.nw{position:relative}
+.ndot{position:absolute;top:5px;right:5px;width:6px;height:6px;background:var(--red);border-radius:50%;border:2px solid var(--bg2)}
+.store-pill{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 11px;font-size:11px;cursor:pointer;transition:all .2s}
+.store-pill:hover{border-color:var(--border3)}
+.smb{width:50px;height:4px;background:var(--border3);border-radius:2px;overflow:hidden}
+.smf{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--purple));transition:width .3s}
+
+/* ── PAGE ── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.pt{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
+.ps{font-size:12px;color:var(--text3)}
+.pa{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px}
+
+/* ── STATS ── */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sc:hover{border-color:var(--border3);transform:translateY(-2px);box-shadow:var(--sh)}
+.si{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px}
+.sv{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px;line-height:1}
+.sl{font-size:11px;color:var(--text3);margin-bottom:6px}
+.sch{font-size:11px;display:flex;align-items:center;gap:4px}
+.cup{color:var(--green)}.cdn{color:var(--red)}.cne{color:var(--text3)}
+
+/* ── STORAGE ── */
+.stw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:22px}
+.sth{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.stt{font-size:13px;font-weight:500}
+.std{font-size:11px;color:var(--text3)}
+.segs{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin-bottom:10px}
+.seg{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.stleg{display:flex;gap:14px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.legdot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── GALLERY ── */
+.gtb{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.fr{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;background:var(--surface);color:var(--text3);border:1px solid var(--border);user-select:none}
+.chip:hover{border-color:var(--border3);color:var(--text2)}
+.chip.on{background:var(--adim);color:var(--accent2);border-color:rgba(91,124,246,.3)}
+.ssort{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text2);font-size:12px;outline:none;font-family:'DM Sans',sans-serif;cursor:pointer}
+.vt{display:flex;background:var(--surface);border-radius:var(--r);padding:3px;gap:3px;border:1px solid var(--border)}
+.vb{padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text3);transition:all .15s;user-select:none}
+.vb.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.gallery.lst{grid-template-columns:1fr}
+.ic{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.ic:hover{border-color:var(--border3);transform:translateY(-2px);box-shadow:var(--sh)}
+.ic.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(91,124,246,.25)}
+.ic.lst{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r)}
+.ith{width:100%;aspect-ratio:1;overflow:hidden;background:var(--surface);position:relative;flex-shrink:0}
+.ic.lst .ith{width:52px;height:52px;aspect-ratio:1;border-radius:7px}
+.ith svg{width:100%;height:100%;display:block}
+.iov{position:absolute;inset:0;background:rgba(7,8,12,.65);opacity:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.ic:hover .iov{opacity:1}
+.ovb{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;backdrop-filter:blur(4px)}
+.ovb:hover{background:rgba(255,255,255,.2)}
+.ichk{position:absolute;top:8px;left:8px;width:22px;height:22px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;opacity:0;transition:opacity .15s;z-index:2;color:#fff;font-weight:700}
+.ic.sel .ichk{opacity:1}
+.iin{padding:9px 11px}
+.ic.lst .iin{flex:1;min-width:0;padding:0}
+.inm{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imt{font-size:10px;color:var(--text3);margin-top:2px}
+.itgs{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.itg{font-size:9px;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--text3)}
+.bulk{background:var(--adim);border:1px solid rgba(91,124,246,.25);border-radius:var(--r);padding:9px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;animation:fadeUp .2s ease}
+
+/* ── UPLOAD ── */
+.uz{border:2px dashed var(--border3);border-radius:var(--rxl);padding:48px 24px;text-align:center;cursor:pointer;transition:all .25s}
+.uz:hover,.uz.drag{border-color:var(--accent);background:var(--adim)}
+.uz-ic{font-size:42px;margin-bottom:14px;display:block}
+.uz-t{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;margin-bottom:6px}
+.uz-s{font-size:12px;color:var(--text3);margin-bottom:16px}
+.fmts{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.fpill{font-size:10px;padding:3px 9px;border-radius:4px;background:var(--surface2);color:var(--text2);font-family:'JetBrains Mono',monospace;font-weight:500;border:1px solid var(--border2)}
+.ogrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.oc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all .15s}
+.oc:hover{border-color:var(--border3)}
+.oc.chk{background:var(--adim);border-color:rgba(91,124,246,.3)}
+.ochk{width:18px;height:18px;border-radius:4px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;background:var(--bg3)}
+.oc.chk .ochk{background:var(--accent);border-color:var(--accent);color:#fff}
+.oname{font-size:12px;font-weight:500;margin-bottom:2px}
+.odesc{font-size:10px;color:var(--text3)}
+.upi{background:var(--surface);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:8px;animation:fadeUp .3s ease}
+.upth{width:38px;height:38px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.upin{flex:1;min-width:0}
+.upn{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upbb{height:3px;background:var(--border);border-radius:2px;margin-top:5px}
+.upbf{height:100%;border-radius:2px;transition:width .4s}
+.upst{font-size:10px;margin-top:2px;color:var(--text3)}
+
+/* ── PANELS ── */
+.panel{position:fixed;right:-420px;top:0;height:100vh;width:390px;background:var(--bg2);border-left:1px solid var(--border);z-index:200;transition:right .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.panel.open{right:0}
+.ph2{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ptit{font-size:14px;font-weight:600;font-family:'Syne',sans-serif}
+.pb{flex:1;overflow-y:auto;padding:16px}
+.pprev{width:100%;aspect-ratio:16/10;border-radius:var(--r);overflow:hidden;background:var(--surface);margin-bottom:16px}
+.ppa{display:flex;gap:8px;margin-bottom:16px}
+.isec{margin-bottom:16px}
+.isect{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.irow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center}
+.irow:last-child{border-bottom:none}
+.ikey{color:var(--text3)}
+.ival{font-weight:500;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)}
+.tw{display:flex;flex-wrap:wrap;gap:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:7px 10px;min-height:40px;align-items:center;cursor:text}
+.tchip{display:flex;align-items:center;gap:4px;background:var(--surface2);color:var(--accent2);font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid rgba(91,124,246,.2)}
+.trm{cursor:pointer;color:var(--text3);font-size:11px}
+.trm:hover{color:var(--red)}
+.tti{background:transparent;border:none;outline:none;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;min-width:80px;flex:1}
+.vi{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r);background:var(--surface);margin-bottom:6px;font-size:12px}
+.vc{border:1px solid rgba(91,124,246,.25);background:var(--adim)}
+
+/* ── MODALS ── */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.mo.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rxl);padding:24px;width:460px;max-width:94vw;max-height:88vh;overflow-y:auto;transform:scale(.96);transition:transform .2s}
+.mo.open .modal{transform:scale(1)}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.mtit{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.mcls{width:28px;height:28px;border-radius:7px;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:16px;border:1px solid var(--border)}
+.mcls:hover{background:var(--surface2);color:var(--text)}
+
+/* ── TOUR ── */
+.tour-ov{position:fixed;inset:0;z-index:3000;pointer-events:none;display:none}
+.tour-ov.on{display:block}
+.thl{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.78);border:2px solid var(--accent);transition:all .4s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.tc{position:absolute;background:var(--bg2);border:1px solid var(--accent);border-radius:var(--rl);padding:20px;width:290px;pointer-events:all;box-shadow:var(--shl);transition:all .35s cubic-bezier(.4,0,.2,1)}
+.tstep{font-size:10px;font-weight:600;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.ttit{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:7px}
+.tdesc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+.tfoot{display:flex;align-items:center;justify-content:space-between}
+.tdots{display:flex;gap:5px}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--border3);transition:all .2s}
+.tdot.on{background:var(--accent);width:14px;border-radius:3px}
+.tbtns{display:flex;gap:7px}
+.tbtn{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:'DM Sans',sans-serif}
+.tp{background:var(--surface);color:var(--text2)}
+.tp:hover{background:var(--surface2)}
+.tn{background:var(--accent);color:#fff}
+.tn:hover{background:var(--accent2)}
+
+/* ── CTX MENU ── */
+.ctx{position:fixed;background:var(--bg2);border:1px solid var(--border3);border-radius:var(--rl);padding:5px;z-index:800;min-width:170px;display:none;box-shadow:var(--shl)}
+.ctx.open{display:block}
+.cxi{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s}
+.cxi:hover{background:var(--surface2);color:var(--text)}
+.cxi.dng{color:var(--red)}
+.cxi.dng:hover{background:var(--rdim)}
+.cxs{height:1px;background:var(--border);margin:4px 0}
+.cxico{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+
+/* ── MISC ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:9px 16px;font-size:13px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px;white-space:nowrap}
+.tab:hover{color:var(--text2)}
+.tab.on{color:var(--accent2);border-bottom-color:var(--accent)}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-ic{font-size:48px;margin-bottom:14px;opacity:.4}
+.empty-t{font-size:16px;font-weight:500;margin-bottom:6px;color:var(--text2)}
+.empty-s{font-size:12px;line-height:1.5}
+select.fi option{background:var(--bg2)}
+textarea.fi{resize:vertical}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface2);color:var(--text);padding:9px 18px;border-radius:var(--r);font-size:13px;z-index:9000;transition:transform .3s;white-space:nowrap;border:1px solid var(--border3);box-shadow:var(--sh)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .3s ease}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@media(max-width:768px){.sg{grid-template-columns:repeat(2,1fr)}.sb{width:58px;min-width:58px}.sb .sb-lbl,.sb .sb-item>span:not(.sb-badge),.sb .sb-txt,.sb .sb-uinfo,.sb .sb-toggle{display:none}.sb .sb-item{padding:9px 12px;justify-content:center}}
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH ═══ -->
+<div id="authWrap">
+  <div class="auth-bg">
+    <div class="auth-orb" style="width:500px;height:500px;top:-100px;left:-100px;background:var(--accent)"></div>
+    <div class="auth-orb" style="width:400px;height:400px;bottom:-80px;right:-80px;background:var(--purple)"></div>
+  </div>
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-mark">D</div>
+      <div class="auth-h1">DAMvault</div>
+      <div class="auth-sub">Enterprise Image & Asset Management</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="atab active" id="tabL" onclick="switchTab('login')">Iniciar sesión</div>
+      <div class="atab" id="tabR" onclick="switchTab('reg')">Registrarse</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="fLogin">
+      <div class="fg">
+        <div class="fl">Correo corporativo</div>
+        <input class="fi" id="lEmail" type="email" placeholder="usuario@empresa.com" value="admin@empresa.com">
+        <div class="err-msg" id="lEmailErr">Correo inválido o no registrado</div>
+      </div>
+      <div class="fg">
+        <div class="fl"><span>Contraseña</span><a style="color:var(--accent2);cursor:pointer;font-size:10px" onclick="openMo('moForgot')">¿Olvidé mi contraseña?</a></div>
+        <input class="fi" id="lPass" type="password" placeholder="••••••••" value="Admin1234!">
+        <div class="err-msg" id="lPassErr">Contraseña incorrecta</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;font-size:12px">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--text2)">
+          <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px"> Mantener sesión
+        </label>
+        <span style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:10px">v2.4.1-beta</span>
+      </div>
+      <button class="btn btn-p btn-full" onclick="doLogin()">Iniciar sesión</button>
+      <div class="divdr">o continúa con SSO</div>
+      <div class="oauth-row">
+        <button class="oauth-btn" onclick="oauthLogin('Google')">
+          <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+        <button class="oauth-btn" onclick="oauthLogin('Microsoft')">
+          <svg width="15" height="15" viewBox="0 0 23 23"><rect x="1" y="1" width="10" height="10" fill="#f25022"/><rect x="12" y="1" width="10" height="10" fill="#7fba00"/><rect x="1" y="12" width="10" height="10" fill="#00a4ef"/><rect x="12" y="12" width="10" height="10" fill="#ffb900"/></svg>
+          Microsoft
+        </button>
+        <button class="oauth-btn" onclick="oauthLogin('LDAP')">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500">LDAP</span>
+        </button>
+      </div>
+      <div class="sec-strip">🔒 <span>AES-256 · TLS 1.3 · 2FA · SOC 2 · GDPR · ISO 27001</span></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="fReg" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg"><div class="fl">Nombre</div><input class="fi" id="rFirst" type="text" placeholder="María"></div>
+        <div class="fg"><div class="fl">Apellido</div><input class="fi" id="rLast" type="text" placeholder="Acevedo"></div>
+      </div>
+      <div class="fg"><div class="fl">Empresa</div><input class="fi" id="rCo" type="text" placeholder="Acme Corp S.A."></div>
+      <div class="fg">
+        <div class="fl">Correo corporativo</div>
+        <input class="fi" id="rEmail" type="email" placeholder="usuario@empresa.com" oninput="chkEmail(this)">
+        <div class="err-msg" id="rEmailErr">Usa un correo corporativo válido</div>
+      </div>
+      <div class="fg">
+        <div class="fl">Contraseña</div>
+        <input class="fi" id="rPass" type="password" placeholder="Mín. 8 · mayúscula · número · símbolo" oninput="chkStr(this.value)">
+        <div class="str-bar"><div class="str-fill" id="strFill" style="width:0%;background:var(--red)"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px" id="strLbl">Ingresa una contraseña</div>
+      </div>
+      <div class="fg">
+        <div class="fl">Confirmar contraseña</div>
+        <input class="fi" id="rPass2" type="password" placeholder="Repite la contraseña">
+        <div class="err-msg" id="rPassErr">Las contraseñas no coinciden</div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:16px;cursor:pointer;font-size:12px;color:var(--text2)">
+        <input type="checkbox" id="rTerms" style="accent-color:var(--accent);width:14px;height:14px;margin-top:1px;flex-shrink:0">
+        Acepto los <a style="color:var(--accent2)">Términos de servicio</a> y <a style="color:var(--accent2)">Política de privacidad</a>
+      </label>
+      <button class="btn btn-p btn-full" onclick="doReg()">Crear cuenta gratis</button>
+      <div class="sec-strip" style="margin-top:12px">🔒 <span>Plan gratuito: 5 GB · Sin tarjeta de crédito requerida</span></div>
+    </div>
+
+    <!-- 2FA -->
+    <div id="fTfa" style="display:none">
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:14px;text-align:center;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px">Verificación en dos pasos</div>
+        <div style="font-size:11px;color:var(--text3)">Ingresa el código de 6 dígitos de tu autenticadora</div>
+        <div class="tfa-grid">
+          <input class="tfa-d" type="text" maxlength="1" id="t0" oninput="tfaN(this,0)">
+          <input class="tfa-d" type="text" maxlength="1" id="t1" oninput="tfaN(this,1)">
+          <input class="tfa-d" type="text" maxlength="1" id="t2" oninput="tfaN(this,2)">
+          <input class="tfa-d" type="text" maxlength="1" id="t3" oninput="tfaN(this,3)">
+          <input class="tfa-d" type="text" maxlength="1" id="t4" oninput="tfaN(this,4)">
+          <input class="tfa-d" type="text" maxlength="1" id="t5" oninput="tfaN(this,5)">
+        </div>
+      </div>
+      <button class="btn btn-p btn-full" onclick="doTfa()">Verificar acceso</button>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text3)">¿Sin acceso? <a style="color:var(--accent2);cursor:pointer">Código de recuperación</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app" style="display:none">
+  <div class="sb" id="sb">
+    <div class="sb-logo">
+      <div class="sb-mark">D</div>
+      <div>
+        <div class="sb-txt">DAMvault</div>
+        <div class="sb-sub">Enterprise</div>
+      </div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-sec">
+        <div class="sb-lbl">Principal</div>
+        <div class="sb-item active" id="n-dashboard" onclick="nav('dashboard')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></div>
+        <div class="sb-item" id="n-library" onclick="nav('library')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Biblioteca</span><span class="sb-badge" id="libCnt">0</span></div>
+        <div class="sb-item" id="n-upload" onclick="nav('upload')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Subir archivos</span></div>
+        <div class="sb-item" id="n-collections" onclick="nav('collections')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>Colecciones</span></div>
+        <div class="sb-item" id="n-shared" onclick="nav('shared')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartidos</span></div>
+        <div class="sb-item" id="n-trash" onclick="nav('trash')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><span>Papelera</span><span class="sb-badge sb-badge-w" id="trshCnt">0</span></div>
+      </div>
+      <div class="sb-sec">
+        <div class="sb-lbl">Empresa</div>
+        <div class="sb-item" id="n-team" onclick="nav('team')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Equipo</span></div>
+        <div class="sb-item" id="n-analytics" onclick="nav('analytics')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="3 20 21 20"/></svg><span>Analytics</span></div>
+        <div class="sb-item" id="n-api" onclick="nav('api')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>API & Webhooks</span></div>
+      </div>
+      <div class="sb-sec">
+        <div class="sb-lbl">Sistema</div>
+        <div class="sb-item" id="n-security" onclick="nav('security')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Seguridad</span></div>
+        <div class="sb-item" id="n-plans" onclick="nav('plans')"><svg class="sb-icon" viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Planes</span></div>
+      </div>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-user" onclick="nav('profile')">
+        <div class="av av-sm" id="sbAv" style="background:linear-gradient(135deg,#5b7cf6,#b06ef5)">MA</div>
+        <div class="sb-uinfo">
+          <div class="sb-uname" id="sbName">María Acevedo</div>
+          <div class="sb-urole" id="sbRole">Administrador</div>
+        </div>
+        <div class="sb-toggle" onclick="toggleSb(event)">‹</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="btn btn-ico" onclick="toggleSb()">☰</button>
+      <div class="srch">
+        <span class="srch-ic">⌕</span>
+        <input type="text" id="srchIn" placeholder="Buscar imágenes, colecciones, tags..." oninput="onSearch(this.value)" autocomplete="off">
+      </div>
+      <div class="tb-right">
+        <div class="store-pill" onclick="nav('plans')" id="spill">
+          <span id="sused">3.7 GB</span>
+          <div class="smb"><div class="smf" id="smf" style="width:74%"></div></div>
+          <span style="color:var(--text3)">/ 5 GB</span>
+        </div>
+        <button class="btn btn-g" id="tourBtn" onclick="startTour()">▶ Tour</button>
+        <div class="nw">
+          <button class="btn btn-ico" onclick="togglePanel('pNotif')" id="nBtn">🔔</button>
+          <div class="ndot" id="ndot"></div>
+        </div>
+        <button class="btn btn-p" onclick="nav('upload')" style="padding:8px 14px">+ Subir</button>
+      </div>
+    </div>
+    <div class="content" id="pc"></div>
+  </div>
+</div>
+
+<!-- PANELS -->
+<div class="panel" id="pImg">
+  <div class="ph2"><div class="ptit">Detalle de imagen</div><button class="mcls" onclick="closeAll()">✕</button></div>
+  <div class="pb" id="pImgB"></div>
+</div>
+<div class="panel" id="pNotif">
+  <div class="ph2">
+    <div class="ptit">Notificaciones</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn btn-g" style="font-size:11px;padding:4px 9px" onclick="markAllRead()">Leer todas</button>
+      <button class="mcls" onclick="closeAll()">✕</button>
+    </div>
+  </div>
+  <div class="pb" id="pNotifB"></div>
+</div>
+
+<!-- MODALS -->
+<div class="mo" id="moShare">
+  <div class="modal">
+    <div class="mhdr"><div class="mtit">🔗 Compartir imagen</div><button class="mcls" onclick="closeMo('moShare')">✕</button></div>
+    <div class="fg"><div class="fl">Enlace generado</div>
+      <div style="display:flex;gap:8px">
+        <input class="fi" id="shLink" type="text" readonly style="font-family:'JetBrains Mono',monospace;font-size:11px">
+        <button class="btn btn-p" onclick="copyLink()">Copiar</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="fg" style="margin:0"><div class="fl">Expiración</div>
+        <select class="fi" id="shExp"><option value="24h">24 horas</option><option value="7d" selected>7 días</option><option value="30d">30 días</option><option value="never">Sin expiración</option></select>
+      </div>
+      <div class="fg" style="margin:0"><div class="fl">Resolución</div>
+        <select class="fi" id="shRes"><option>Original</option><option>Web (1920px)</option><option>Thumbnail (400px)</option></select>
+      </div>
+    </div>
+    <div class="fg"><div class="fl">Permisos</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" checked style="accent-color:var(--accent)"> Solo visualización</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="shDl" style="accent-color:var(--accent)"> Permitir descarga</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="shPw" style="accent-color:var(--accent)" onchange="document.getElementById('shPwG').style.display=this.checked?'block':'none'"> Requiere contraseña</label>
+      </div>
+    </div>
+    <div id="shPwG" style="display:none" class="fg"><div class="fl">Contraseña del enlace</div><input class="fi" type="password" placeholder="Contraseña para acceder"></div>
+    <button class="btn btn-p btn-full" onclick="createShare()">✓ Crear enlace seguro</button>
+  </div>
+</div>
+
+<div class="mo" id="moInvite">
+  <div class="modal">
+    <div class="mhdr"><div class="mtit">👥 Invitar miembro</div><button class="mcls" onclick="closeMo('moInvite')">✕</button></div>
+    <div class="fg"><div class="fl">Correos (separados por coma)</div><textarea class="fi" id="invEmails" rows="3" placeholder="user1@empresa.com, user2@empresa.com"></textarea></div>
+    <div class="fg"><div class="fl">Rol</div>
+      <select class="fi" id="invRole"><option value="viewer">Viewer — Solo lectura</option><option value="editor" selected>Editor — Subir y editar</option><option value="admin">Admin — Control total</option></select>
+    </div>
+    <div class="fg"><div class="fl">Mensaje opcional</div><textarea class="fi" id="invMsg" rows="2" placeholder="Te invito a colaborar en DAMvault..."></textarea></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-p btn-full" onclick="sendInvite()">✉ Enviar invitaciones</button><button class="btn btn-g" onclick="closeMo('moInvite')">Cancelar</button></div>
+  </div>
+</div>
+
+<div class="mo" id="moMeta">
+  <div class="modal">
+    <div class="mhdr"><div class="mtit">✏ Editar metadata</div><button class="mcls" onclick="closeMo('moMeta')">✕</button></div>
+    <div class="fg"><div class="fl">Nombre de archivo</div><input class="fi" id="eName" type="text"></div>
+    <div class="fg"><div class="fl">Descripción</div><textarea class="fi" id="eDesc" rows="2"></textarea></div>
+    <div class="fg"><div class="fl">Tags (Enter para agregar)</div>
+      <div class="tw" id="tw" onclick="document.getElementById('tti').focus()"></div>
+    </div>
+    <div class="fg"><div class="fl">Carpeta</div>
+      <select class="fi" id="eFolder"><option>Marketing</option><option>Productos</option><option>Branding</option><option>RRHH</option><option>Reportes</option><option>Eventos</option></select>
+    </div>
+    <div class="fg"><div class="fl">Licencia</div>
+      <select class="fi" id="eLic"><option>Uso interno</option><option>Creative Commons CC-BY</option><option>Copyright — Todos los derechos</option><option>Dominio público</option></select>
+    </div>
+    <div style="display:flex;gap:8px"><button class="btn btn-p btn-full" onclick="saveMeta()">✓ Guardar cambios</button><button class="btn btn-g" onclick="closeMo('moMeta')">Cancelar</button></div>
+  </div>
+</div>
+
+<div class="mo" id="moForgot">
+  <div class="modal">
+    <div class="mhdr"><div class="mtit">🔑 Recuperar acceso</div><button class="mcls" onclick="closeMo('moForgot')">✕</button></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Ingresa tu correo y te enviaremos instrucciones para restablecer tu contraseña.</div>
+    <div class="fg"><div class="fl">Correo corporativo</div><input class="fi" type="email" placeholder="usuario@empresa.com"></div>
+    <button class="btn btn-p btn-full" onclick="closeMo('moForgot');toast('📧 Correo de recuperación enviado')">Enviar instrucciones</button>
+  </div>
+</div>
+
+<!-- CTX MENU -->
+<div class="ctx" id="ctx">
+  <div class="cxi" onclick="ctxAct('view')"><span class="cxico">👁</span> Ver detalles</div>
+  <div class="cxi" onclick="ctxAct('edit')"><span class="cxico">✏</span> Editar metadata</div>
+  <div class="cxi" onclick="ctxAct('download')"><span class="cxico">⬇</span> Descargar</div>
+  <div class="cxi" onclick="ctxAct('share')"><span class="cxico">🔗</span> Crear enlace</div>
+  <div class="cxi" onclick="ctxAct('versions')"><span class="cxico">📋</span> Ver versiones</div>
+  <div class="cxi" onclick="ctxAct('move')"><span class="cxico">📁</span> Mover a carpeta</div>
+  <div class="cxs"></div>
+  <div class="cxi dng" onclick="ctxAct('delete')"><span class="cxico">🗑</span> Mover a papelera</div>
+</div>
+
+<!-- TOUR -->
+<div class="tour-ov" id="tourOv">
+  <div class="thl" id="thl"></div>
+  <div class="tc" id="tc">
+    <div class="tstep" id="tstep"></div>
+    <div class="ttit" id="ttit"></div>
+    <div class="tdesc" id="tdesc"></div>
+    <div class="tfoot">
+      <div class="tdots" id="tdots"></div>
+      <div class="tbtns">
+        <button class="tbtn tp" id="tprev" onclick="moveTour(-1)">← Atrás</button>
+        <button class="tbtn tn" id="tnext" onclick="moveTour(1)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  DATABASE — localStorage
+// ════════════════════════════════════════════
+const DB={
+  get(k){try{return JSON.parse(localStorage.getItem('dv_'+k))}catch{return null}},
+  set(k,v){localStorage.setItem('dv_'+k,JSON.stringify(v))},
+  del(k){localStorage.removeItem('dv_'+k)}
+};
+
+function hp(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return h.toString(36)}
+
+function initDB(){
+  if(DB.get('init')) return;
+  DB.set('users',[
+    {id:'u1',first:'María',last:'Acevedo',email:'admin@empresa.com',pw:hp('Admin1234!'),role:'admin',company:'Acme Corp',su:3.7,sm:5,ac:'#5b7cf6,#b06ef5',created:'2024-01-01',tfa:true,ll:new Date().toISOString()},
+    {id:'u2',first:'Carlos',last:'Ruiz',email:'c.ruiz@empresa.com',pw:hp('Editor2024!'),role:'editor',company:'Acme Corp',su:1.2,sm:5,ac:'#1fdb8a,#22d3ee',created:'2024-01-05',tfa:false,ll:'2024-01-14T10:00:00Z'},
+    {id:'u3',first:'Ana',last:'López',email:'a.lopez@empresa.com',pw:hp('Editor2024!'),role:'editor',company:'Acme Corp',su:0.8,sm:5,ac:'#f4a832,#f05252',created:'2024-01-08',tfa:false,ll:'2024-01-13T15:00:00Z'},
+    {id:'u4',first:'Diego',last:'Morales',email:'d.morales@empresa.com',pw:hp('Viewer2024!'),role:'viewer',company:'Acme Corp',su:0.2,sm:5,ac:'#b06ef5,#5b7cf6',created:'2024-01-10',tfa:false,ll:'2024-01-12T09:00:00Z'},
+  ]);
+  DB.set('images',genImgs());
+  DB.set('collections',[
+    {id:'c1',name:'Marketing 2024',icon:'🎯',color:'#5b7cf6',count:45,owner:'u1',created:'2024-01-01'},
+    {id:'c2',name:'Catálogo Productos',icon:'📦',color:'#1fdb8a',count:28,owner:'u2',created:'2024-01-05'},
+    {id:'c3',name:'Branding Assets',icon:'🎨',color:'#b06ef5',count:19,owner:'u1',created:'2024-01-06'},
+    {id:'c4',name:'Equipo & Cultura',icon:'👥',color:'#f4a832',count:34,owner:'u3',created:'2024-01-08'},
+    {id:'c5',name:'Eventos 2024',icon:'🎉',color:'#22d3ee',count:22,owner:'u1',created:'2024-01-09'},
+    {id:'c6',name:'Reportes Q1',icon:'📊',color:'#f05252',count:12,owner:'u2',created:'2024-01-10'},
+  ]);
+  DB.set('shared',[
+    {id:'s1',iid:0,name:'hero-banner-2024.jpg',by:'u1',views:124,exp:'2024-01-29',status:'active',link:'https://dam.co/sh/a8f2k'},
+    {id:'s2',iid:1,name:'producto-laptop-v3.png',by:'u2',views:89,exp:'2024-02-04',status:'active',link:'https://dam.co/sh/b9g3m'},
+    {id:'s3',iid:3,name:'logo-variantes.svg',by:'u1',views:342,exp:'never',status:'active',link:'https://dam.co/sh/c1h4n'},
+    {id:'s4',iid:5,name:'infografia-q1.png',by:'u3',views:45,exp:'2024-01-15',status:'expired',link:'https://dam.co/sh/d2i5p'},
+  ]);
+  DB.set('trash',[
+    {id:'t1',name:'banner-navidad.jpg',size:'3.1 MB',fmt:'JPEG',deleted:'2024-01-20',days:12},
+    {id:'t2',name:'promo-vieja.png',size:'1.8 MB',fmt:'PNG',deleted:'2024-01-18',days:10},
+    {id:'t3',name:'foto-old.jpg',size:'0.9 MB',fmt:'JPEG',deleted:'2024-01-15',days:7},
+  ]);
+  DB.set('notifs',[
+    {id:'n1',icon:'📤',title:'Carlos subió 5 imágenes',desc:'Carpeta: Productos',time:'Hace 5 min',read:false,color:'var(--accent)'},
+    {id:'n2',icon:'🔗',title:'Enlace compartido expiró',desc:'hero-banner-2024.jpg',time:'Hace 1h',read:false,color:'var(--amber)'},
+    {id:'n3',icon:'👥',title:'Diego Morales se unió',desc:'Rol: Viewer asignado',time:'Hace 3h',read:false,color:'var(--green)'},
+    {id:'n4',icon:'⚠️',title:'Almacenamiento al 74%',desc:'3.7 GB de 5 GB usados',time:'Hace 5h',read:true,color:'var(--amber)'},
+    {id:'n5',icon:'✅',title:'Conversión WebP completada',desc:'12 imágenes optimizadas -38%',time:'Ayer',read:true,color:'var(--green)'},
+    {id:'n6',icon:'🛡',title:'Login desde nueva IP',desc:'181.65.34.22 — Ecuador',time:'Ayer',read:true,color:'var(--red)'},
+  ]);
+  DB.set('apikeys',[
+    {id:'k1',name:'Producción',key:'dvk_prod_a7f8k2m3n9p4q5r6',created:'2024-01-01',calls:12840,status:'active'},
+    {id:'k2',name:'Desarrollo',key:'dvk_dev_b8g9l3n4o5p6q7r2',created:'2024-01-10',calls:342,status:'active'},
+  ]);
+  DB.set('webhooks',[
+    {id:'w1',url:'https://api.empresa.com/dam/hook',events:['upload','delete'],status:'active'},
+    {id:'w2',url:'https://hooks.slack.com/xxx',events:['share'],status:'active'},
+  ]);
+  DB.set('seclog',[
+    {icon:'✅',title:'Login exitoso',detail:'María Acevedo · 192.168.1.1',time:'Hace 2 min'},
+    {icon:'⚠️',title:'Intento fallido bloqueado',detail:'IP: 45.67.89.123 — Ban 24h',time:'Hace 15 min'},
+    {icon:'✅',title:'Descarga masiva',detail:'Carlos Ruiz · 12 archivos',time:'Hace 1h'},
+    {icon:'🔗',title:'Enlace creado',detail:'Ana López · hero-banner',time:'Hace 3h'},
+    {icon:'🔑',title:'Contraseña cambiada',detail:'María Acevedo · política',time:'Hace 2 días'},
+  ]);
+  DB.set('secopts',{tfa:true,jwt:true,rl:true,aes:true,log:true,av:true,cors:true,auto:false,wl:false,single:false});
+  DB.set('init',true);
+}
+
+function genImgs(){
+  const cfg=[
+    {n:'hero-banner-2024.jpg',s:'4.2 MB',d:'3840×2160',f:'JPEG',t:['marketing','hero','2024'],fo:'Marketing',c:'#5b7cf6',u:'u1'},
+    {n:'producto-laptop-v3.png',s:'2.8 MB',d:'2400×1800',f:'PNG',t:['producto','tech'],fo:'Productos',c:'#1fdb8a',u:'u2'},
+    {n:'oficina-coworking.jpg',s:'5.1 MB',d:'4096×2731',f:'JPEG',t:['oficina','equipo'],fo:'RRHH',c:'#f4a832',u:'u3'},
+    {n:'logo-variantes-v2.svg',s:'0.3 MB',d:'Vectorial',f:'SVG',t:['marca','logo'],fo:'Branding',c:'#b06ef5',u:'u1'},
+    {n:'campaña-verano-24.jpg',s:'3.7 MB',d:'2560×1440',f:'JPEG',t:['campaña','verano'],fo:'Marketing',c:'#22d3ee',u:'u1'},
+    {n:'infografia-q1.png',s:'1.9 MB',d:'1920×1080',f:'PNG',t:['datos','q1'],fo:'Reportes',c:'#f05252',u:'u3'},
+    {n:'equipo-directivo.jpg',s:'6.2 MB',d:'5000×3333',f:'JPEG',t:['equipo','personas'],fo:'RRHH',c:'#f4a832',u:'u2'},
+    {n:'mockup-app-mobile.png',s:'2.1 MB',d:'1080×1920',f:'PNG',t:['app','mobile'],fo:'Producto',c:'#1fdb8a',u:'u1'},
+    {n:'evento-lanzamiento.jpg',s:'7.8 MB',d:'6000×4000',f:'JPEG',t:['evento','2024'],fo:'Eventos',c:'#5b7cf6',u:'u1'},
+    {n:'dashboard-v5.png',s:'1.2 MB',d:'2560×1440',f:'PNG',t:['producto','ui'],fo:'Producto',c:'#b06ef5',u:'u2'},
+    {n:'portada-reporte.jpg',s:'3.4 MB',d:'2480×3508',f:'JPEG',t:['reporte','anual'],fo:'Reportes',c:'#22d3ee',u:'u3'},
+    {n:'render-3d-sede.png',s:'9.1 MB',d:'4096×4096',f:'PNG',t:['arquitectura','sede'],fo:'Infraestructura',c:'#f05252',u:'u1'},
+    {n:'banner-linkedin.jpg',s:'0.8 MB',d:'1200×627',f:'JPEG',t:['linkedin','redes'],fo:'Marketing',c:'#5b7cf6',u:'u2'},
+    {n:'headphones-product.png',s:'4.4 MB',d:'3000×3000',f:'PNG',t:['producto','audio'],fo:'Productos',c:'#1fdb8a',u:'u3'},
+    {n:'iconos-ui-set.svg',s:'0.1 MB',d:'Vectorial',f:'SVG',t:['iconos','ui'],fo:'Branding',c:'#b06ef5',u:'u1'},
+    {n:'foto-oficina-bg.jpg',s:'5.6 MB',d:'4000×2667',f:'JPEG',t:['oficina','cultura'],fo:'RRHH',c:'#f4a832',u:'u2'},
+  ];
+  return cfg.map((c,i)=>({id:'i'+i,name:c.n,size:c.s,dims:c.d,fmt:c.f,tags:[...c.t],folder:c.fo,color:c.c,user:c.u,date:'2024-01-'+(16-i).toString().padStart(2,'0'),desc:'',lic:'Uso interno',versions:[{v:1,date:'2024-01-'+(16-i).toString().padStart(2,'0'),size:c.s,note:'Versión inicial'}]}));
+}
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+let CU=null, pending=null;
+
+function switchTab(t){
+  document.getElementById('tabL').classList.toggle('active',t==='login');
+  document.getElementById('tabR').classList.toggle('active',t==='reg');
+  document.getElementById('fLogin').style.display=t==='login'?'block':'none';
+  document.getElementById('fReg').style.display=t==='reg'?'block':'none';
+  document.getElementById('fTfa').style.display='none';
+}
+
+function chkEmail(inp){
+  const v=inp.value;
+  const bad=!v.includes('@')||['gmail','yahoo','hotmail','outlook'].some(d=>v.includes(d));
+  document.getElementById('rEmailErr').style.display=bad&&v.length>3?'block':'none';
+}
+
+function chkStr(p){
+  let s=0;
+  if(p.length>=8)s++;if(p.length>=12)s++;if(/[A-Z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;
+  const lbls=['','Muy débil','Débil','Aceptable','Fuerte','Muy fuerte'];
+  const cols=['','var(--red)','var(--red)','var(--amber)','var(--green)','var(--green)'];
+  const f=document.getElementById('strFill');
+  const l=document.getElementById('strLbl');
+  if(f){f.style.width=(s*20)+'%';f.style.background=cols[s]||'var(--border)';}
+  if(l)l.textContent=lbls[s]||'Ingresa una contraseña';
+}
+
+function tfaN(inp,i){if(inp.value.length===1&&i<5)document.getElementById('t'+(i+1)).focus();}
+
+function doLogin(){
+  const em=document.getElementById('lEmail').value.trim();
+  const pw=document.getElementById('lPass').value;
+  const users=DB.get('users')||[];
+  const u=users.find(x=>x.email===em&&x.pw===hp(pw));
+  if(!u){
+    document.getElementById('lEmailErr').style.display='block';
+    document.getElementById('lPassErr').style.display='block';
+    addSecLog('⚠️','Login fallido',em+' — contraseña incorrecta');
+    return;
+  }
+  if(u.tfa){pending=u;document.getElementById('fLogin').style.display='none';document.getElementById('fTfa').style.display='block';document.getElementById('t0').focus();return;}
+  finishLogin(u);
+}
+
+function doTfa(){
+  const code=Array.from({length:6},(_,i)=>document.getElementById('t'+i).value).join('');
+  if(code.length!==6){toast('⚠️ Ingresa el código completo');return;}
+  finishLogin(pending);
+}
+
+function doReg(){
+  const first=document.getElementById('rFirst').value.trim();
+  const last=document.getElementById('rLast').value.trim();
+  const email=document.getElementById('rEmail').value.trim();
+  const pw=document.getElementById('rPass').value;
+  const pw2=document.getElementById('rPass2').value;
+  const terms=document.getElementById('rTerms').checked;
+  if(!first||!last||!email||!pw){toast('⚠️ Completa todos los campos');return;}
+  if(pw!==pw2){document.getElementById('rPassErr').style.display='block';return;}
+  if(!terms){toast('⚠️ Acepta los términos de servicio');return;}
+  const users=DB.get('users')||[];
+  if(users.find(u=>u.email===email)){toast('⚠️ Ese correo ya está registrado');return;}
+  const nu={id:'u'+Date.now(),first,last,email,pw:hp(pw),role:'viewer',company:document.getElementById('rCo').value,su:0,sm:5,ac:'#5b7cf6,#1fdb8a',created:new Date().toISOString().slice(0,10),tfa:false,ll:new Date().toISOString()};
+  users.push(nu);DB.set('users',users);
+  finishLogin(nu);
+  toast('✅ ¡Cuenta creada exitosamente!');
+}
+
+function finishLogin(u){
+  CU=u;
+  const users=DB.get('users')||[];
+  const idx=users.findIndex(x=>x.id===u.id);
+  if(idx>=0){users[idx].ll=new Date().toISOString();DB.set('users',users);}
+  DB.set('sess',{uid:u.id,tok:'tok_'+Math.random().toString(36).slice(2),exp:Date.now()+86400000});
+  addSecLog('✅','Login exitoso',u.first+' '+u.last+' · '+u.email);
+  showApp();
+}
+
+function oauthLogin(p){
+  toast('🔄 Conectando con '+p+'...');
+  setTimeout(()=>{const u=(DB.get('users')||[])[0];if(u)finishLogin(u);},1200);
+}
+
+function showApp(){
+  const aw=document.getElementById('authWrap');
+  aw.style.opacity='0';aw.style.transition='opacity .4s';
+  setTimeout(()=>{
+    aw.style.display='none';
+    document.getElementById('app').style.display='flex';
+    updateUI();
+    nav('dashboard');
+    setTimeout(()=>{if(!DB.get('tourDone'))startTour();},700);
+  },400);
+}
+
+function updateUI(){
+  if(!CU)return;
+  const ini=(CU.first[0]+CU.last[0]).toUpperCase();
+  const av=document.getElementById('sbAv');
+  av.textContent=ini;av.style.background='linear-gradient(135deg,'+CU.ac+')';
+  document.getElementById('sbName').textContent=CU.first+' '+CU.last;
+  document.getElementById('sbRole').textContent=CU.role.charAt(0).toUpperCase()+CU.role.slice(1);
+  const pct=Math.round((CU.su/CU.sm)*100);
+  document.getElementById('sused').textContent=CU.su+' GB';
+  document.getElementById('smf').style.width=pct+'%';
+  updateBadges();
+}
+
+function updateBadges(){
+  const imgs=DB.get('images')||[];
+  const trash=DB.get('trash')||[];
+  const notifs=(DB.get('notifs')||[]).filter(n=>!n.read);
+  document.getElementById('libCnt').textContent=imgs.length;
+  document.getElementById('trshCnt').textContent=trash.length;
+  document.getElementById('ndot').style.display=notifs.length?'block':'none';
+}
+
+function addSecLog(icon,title,detail){
+  const log=DB.get('seclog')||[];
+  log.unshift({icon,title,detail,time:'Ahora'});
+  DB.set('seclog',log.slice(0,50));
+}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+let PAGE='',SEL=[],CTX=null,FILT='all',SORT='date';
+
+function nav(page){
+  PAGE=page;
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  const el=document.getElementById('n-'+page);
+  if(el)el.classList.add('active');
+  closeAll();closeMoAll();
+  document.getElementById('ctx').classList.remove('open');
+  const pc=document.getElementById('pc');
+  pc.innerHTML='<div style="padding:20px;color:var(--text3)"><span class="spin">↻</span> Cargando...</div>';
+  setTimeout(()=>{pc.innerHTML='';render(page);pc.scrollTop=0;},60);
+}
+
+function render(p){
+  const pc=document.getElementById('pc');
+  const rs={dashboard:rDash,library:rLib,upload:rUp,team:rTeam,analytics:rAnalytics,security:rSec,plans:rPlans,collections:rColl,shared:rShared,api:rAPI,trash:rTrash};
+  if(rs[p]){pc.innerHTML=rs[p]();}
+  else{pc.innerHTML='<div class="empty"><div class="empty-ic">🔧</div><div class="empty-t">'+p+' — En construcción</div><div class="empty-s">Módulo disponible próximamente</div></div>';}
+  if(p==='dashboard')animDash();
+  if(p==='analytics')animCharts();
+}
+
+function toggleSb(e){if(e)e.stopPropagation();document.getElementById('sb').classList.toggle('slim');}
+
+// ════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════
+function rDash(){
+  const imgs=DB.get('images')||[];
+  const users=DB.get('users')||[];
+  return`<div class="ph"><div><div class="pt">Buen día, ${CU?.first||'usuario'} 👋</div><div class="ps">Resumen de tu espacio de trabajo</div></div><div class="pa"><button class="btn btn-g" onclick="nav('analytics')">📊 Reportes</button><button class="btn btn-p" onclick="nav('upload')">+ Subir imágenes</button></div></div>
+  <div class="sg">
+    <div class="sc" onclick="nav('library')"><div class="si" style="background:rgba(91,124,246,.15)">🖼</div><div class="sv" style="color:var(--accent2)" id="sv1">—</div><div class="sl">Total imágenes</div><div class="sch cup">↑ 26 esta semana</div></div>
+    <div class="sc" onclick="nav('plans')"><div class="si" style="background:rgba(176,110,245,.15)">💾</div><div class="sv" style="color:var(--purple)" id="sv2">—</div><div class="sl">Almacenamiento usado</div><div class="sch cne">de ${CU?.sm||5} GB disponibles</div></div>
+    <div class="sc" onclick="nav('team')"><div class="si" style="background:rgba(31,219,138,.15)">👥</div><div class="sv" style="color:var(--green)">${users.length}</div><div class="sl">Usuarios activos</div><div class="sch cne">${users.filter(u=>u.role==='admin').length} admins · ${users.filter(u=>u.role==='editor').length} editores</div></div>
+    <div class="sc" onclick="nav('shared')"><div class="si" style="background:rgba(34,211,238,.15)">🔗</div><div class="sv" style="color:var(--cyan)">14</div><div class="sl">Enlaces activos</div><div class="sch" style="color:var(--amber)">⚠ 3 expiran mañana</div></div>
+  </div>
+  <div class="stw"><div class="sth"><div><div class="stt">Almacenamiento de ${CU?.first||'tu cuenta'}</div><div class="std">${CU?.su||3.7} GB de ${CU?.sm||5} GB usados</div></div><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--amber)" id="sv3">—</div></div>
+    <div class="segs"><div class="seg" id="sg1" data-w="42" style="background:var(--accent);width:0%"></div><div class="seg" id="sg2" data-w="18" style="background:var(--purple);width:0%"></div><div class="seg" id="sg3" data-w="14" style="background:var(--amber);width:0%"></div></div>
+    <div class="stleg"><div class="leg"><div class="legdot" style="background:var(--accent)"></div>JPEG/PNG — 2.1 GB</div><div class="leg"><div class="legdot" style="background:var(--purple)"></div>RAW/SVG — 0.9 GB</div><div class="leg"><div class="legdot" style="background:var(--amber)"></div>Otros — 0.7 GB</div><div class="leg"><div class="legdot" style="background:var(--surface2)"></div>Libre — 1.3 GB</div></div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="font-size:15px;font-weight:600">Subidas recientes</div><button class="btn btn-g" style="font-size:12px" onclick="nav('library')">Ver todo →</button></div>
+  ${gHTML(imgs.slice(0,8))}`;
+}
+
+function animDash(){
+  const imgs=DB.get('images')||[];
+  const pct=Math.round(((CU?.su||3.7)/(CU?.sm||5))*100);
+  setTimeout(()=>{
+    cUp('sv1',imgs.length,900,false,'');
+    cUp('sv2',CU?.su||3.7,700,true,' GB');
+    const e3=document.getElementById('sv3');
+    if(e3){let v=0;const iv=setInterval(()=>{v=Math.min(v+3,pct);e3.textContent=v+'%';if(v>=pct)clearInterval(iv);},18);}
+    ['sg1','sg2','sg3'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=el.dataset.w+'%';});
+  },120);
+}
+
+function cUp(id,target,dur,isF,sfx){
+  const el=document.getElementById(id);if(!el)return;
+  let st=null;
+  function step(ts){
+    if(!st)st=ts;
+    const p=Math.min((ts-st)/dur,1);
+    el.textContent=(isF?(p*target).toFixed(1):Math.floor(p*target))+sfx;
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ════════════════════════════════════════════
+//  LIBRARY
+// ════════════════════════════════════════════
+function rLib(){
+  let imgs=DB.get('images')||[];
+  if(FILT!=='all')imgs=imgs.filter(i=>i.folder===FILT);
+  const q=(document.getElementById('srchIn')?.value||'').toLowerCase().trim();
+  if(q)imgs=imgs.filter(i=>i.name.toLowerCase().includes(q)||i.tags.some(t=>t.includes(q))||i.folder.toLowerCase().includes(q));
+  imgs=sortImgs(imgs);
+  const all=DB.get('images')||[];
+  const folders=[...new Set(all.map(i=>i.folder))];
+  return`<div class="ph"><div><div class="pt">Biblioteca</div><div class="ps">${imgs.length} imágenes${FILT!=='all'?' en '+FILT:''}</div></div><div class="pa"><select class="ssort" onchange="SORT=this.value;nav('library')"><option value="date" ${SORT==='date'?'selected':''}>Fecha ↓</option><option value="name" ${SORT==='name'?'selected':''}>Nombre A-Z</option><option value="size" ${SORT==='size'?'selected':''}>Tamaño</option></select><div class="vt"><div class="vb on" id="vg" onclick="setV('grid',this)">⊞</div><div class="vb" id="vl" onclick="setV('list',this)">☰</div></div></div></div>
+  <div class="fr">${['all',...folders].map(f=>`<div class="chip ${FILT===f?'on':''}" onclick="setFilt('${f}')">${f==='all'?'Todos ('+all.length+')':f}</div>`).join('')}</div>
+  ${SEL.length?`<div class="bulk"><span style="color:var(--accent2);font-weight:500">${SEL.length} sel.</span><button class="btn btn-g" style="font-size:11px;padding:5px 10px" onclick="bDl()">⬇ DL</button><button class="btn btn-g" style="font-size:11px;padding:5px 10px" onclick="bMeta()">✏ Meta</button><button class="btn btn-g" style="font-size:11px;padding:5px 10px" onclick="bMove()">📁 Mover</button><button class="btn btn-d" style="font-size:11px;padding:5px 10px" onclick="bDel()">🗑 Eliminar</button><span style="margin-left:auto;cursor:pointer;color:var(--text3)" onclick="SEL=[];nav('library')">✕</span></div>`:''}
+  ${imgs.length?gHTML(imgs):'<div class="empty"><div class="empty-ic">🔍</div><div class="empty-t">Sin resultados</div><div class="empty-s">Prueba otros filtros o términos</div></div>'}`;
+}
+
+function sortImgs(imgs){
+  if(SORT==='name')return[...imgs].sort((a,b)=>a.name.localeCompare(b.name));
+  if(SORT==='size')return[...imgs].sort((a,b)=>parseFloat(b.size)-parseFloat(a.size));
+  return[...imgs].sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+function gHTML(imgs){
+  return`<div class="gallery" id="gal">${imgs.map(img=>`<div class="ic ${SEL.includes(img.id)?'sel':''}" oncontextmenu="showCtx(event,'${img.id}')" onclick="icClick('${img.id}',event)"><div class="ichk">✓</div><div class="ith"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="${img.color}22"/><rect x="40" y="55" width="120" height="90" rx="8" fill="${img.color}22" stroke="${img.color}44" stroke-width="1"/><circle cx="75" cy="80" r="11" fill="${img.color}55"/><polygon points="92,90 148,62 148,108" fill="${img.color}33"/><text x="100" y="118" text-anchor="middle" fill="${img.color}" font-size="12" font-family="monospace" font-weight="600">${img.fmt}</text></svg><div class="iov"><div class="ovb" onclick="openPImg('${img.id}',event)">👁</div><div class="ovb" onclick="dlImg('${img.id}',event)">⬇</div><div class="ovb" onclick="openShare('${img.id}',event)">🔗</div></div></div><div class="iin"><div class="inm" title="${img.name}">${img.name}</div><div class="imt">${img.size} · ${img.dims}</div><div class="itgs">${img.tags.slice(0,2).map(t=>`<span class="itg">${t}</span>`).join('')}</div></div></div>`).join('')}</div>`;
+}
+
+function icClick(id,e){
+  if(e.shiftKey||e.ctrlKey||e.metaKey){
+    if(SEL.includes(id))SEL=SEL.filter(x=>x!==id);else SEL.push(id);
+    nav('library');
+  }else{openPImg(id,e);}
+}
+
+function setFilt(f){FILT=f;nav('library');}
+function setV(v,btn){
+  document.querySelectorAll('.vb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const g=document.getElementById('gal');
+  if(g)g.className='gallery'+(v==='list'?' lst':'');
+}
+
+function onSearch(){if(PAGE==='library')nav('library');}
+
+// ════════════════════════════════════════════
+//  IMAGE PANEL
+// ════════════════════════════════════════════
+let eTags=[];
+function openPImg(id,e){
+  if(e)e.stopPropagation();
+  const imgs=DB.get('images')||[];
+  const img=imgs.find(i=>i.id===id);
+  if(!img)return;
+  eTags=[...img.tags];
+  const users=DB.get('users')||[];
+  const ow=users.find(u=>u.id===img.user);
+  document.getElementById('pImgB').innerHTML=`
+  <div class="pprev"><svg viewBox="0 0 390 200" xmlns="http://www.w3.org/2000/svg"><rect width="390" height="200" fill="${img.color}22"/><rect x="95" y="35" width="200" height="130" rx="12" fill="${img.color}22" stroke="${img.color}44" stroke-width="1.5"/><circle cx="145" cy="70" r="18" fill="${img.color}55"/><polygon points="168,82 250,52 250,108" fill="${img.color}33"/><text x="195" y="128" text-anchor="middle" fill="${img.color}" font-size="16" font-family="monospace" font-weight="700">${img.fmt}</text></svg></div>
+  <div class="ppa"><button class="btn btn-p" style="flex:1" onclick="dlImg('${id}',null)">⬇ Descargar</button><button class="btn btn-g" onclick="openShare('${id}',null)">🔗</button><button class="btn btn-g" onclick="openMeta('${id}')">✏</button></div>
+  <div class="isec"><div class="isect">Información del archivo</div>
+    ${[['Nombre',img.name],['Formato',img.fmt],['Tamaño',img.size],['Dimensiones',img.dims],['Carpeta',img.folder],['Propietario',ow?ow.first+' '+ow.last:'—'],['Licencia',img.lic||'Uso interno'],['Creado',img.date]].map(([k,v])=>`<div class="irow"><div class="ikey">${k}</div><div class="ival">${v}</div></div>`).join('')}
+  </div>
+  <div class="isec"><div class="isect">Tags (${img.tags.length})</div><div style="display:flex;gap:5px;flex-wrap:wrap">${img.tags.map(t=>`<span class="itg" style="font-size:11px;padding:3px 9px">${t}</span>`).join('')||'<span style="color:var(--text3);font-size:12px">Sin tags</span>'}</div></div>
+  <div class="isec"><div class="isect">Versiones</div>
+    ${(img.versions||[]).map((v,i)=>`<div class="vi ${i===0?'vc':''}"><div style="width:26px;height:26px;border-radius:6px;background:${i===0?'var(--adim)':'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:${i===0?'var(--accent2)':'var(--text3)'}">v${v.v}</div><div style="flex:1"><div style="font-size:12px;font-weight:500">${v.note}</div><div style="font-size:10px;color:var(--text3)">${v.date} · ${v.size}</div></div>${i===0?'<span style="font-size:10px;color:var(--accent2)">Actual</span>':`<button class="btn btn-g" style="font-size:10px;padding:3px 8px" onclick="toast('⏮ v${v.v} restaurada')">Restaurar</button>`}</div>`).join('')}
+  </div>`;
+  togglePanel('pImg');
+}
+
+function openMeta(id){
+  const imgs=DB.get('images')||[];
+  const img=imgs.find(i=>i.id===id);
+  if(!img)return;
+  eTags=[...img.tags];
+  document.getElementById('eName').value=img.name;
+  document.getElementById('eDesc').value=img.desc||'';
+  document.getElementById('eFolder').value=img.folder;
+  document.getElementById('eLic').value=img.lic||'Uso interno';
+  document.getElementById('moMeta').dataset.iid=id;
+  renderTW();
+  openMo('moMeta');
+}
+
+function renderTW(){
+  const w=document.getElementById('tw');
+  if(!w)return;
+  w.innerHTML=eTags.map((t,i)=>`<span class="tchip">${t}<span class="trm" onclick="rmTag(${i})">✕</span></span>`).join('')+'<input class="tti" id="tti" placeholder="Tag..." onkeydown="hTag(event)">';
+}
+
+function hTag(e){
+  const v=e.target.value.trim().toLowerCase();
+  if((e.key==='Enter'||e.key===',')&&v){e.preventDefault();eTags.push(v);renderTW();document.getElementById('tti').focus();}
+  if(e.key==='Backspace'&&!e.target.value&&eTags.length){eTags.pop();renderTW();document.getElementById('tti').focus();}
+}
+
+function rmTag(i){eTags.splice(i,1);renderTW();}
+
+function saveMeta(){
+  const id=document.getElementById('moMeta').dataset.iid;
+  const imgs=DB.get('images')||[];
+  const idx=imgs.findIndex(i=>i.id===id);
+  if(idx>=0){imgs[idx].name=document.getElementById('eName').value;imgs[idx].desc=document.getElementById('eDesc').value;imgs[idx].tags=[...eTags];imgs[idx].folder=document.getElementById('eFolder').value;imgs[idx].lic=document.getElementById('eLic').value;DB.set('images',imgs);}
+  closeMo('moMeta');toast('✅ Metadata guardada');
+  if(PAGE==='library')nav('library');
+}
+
+// ════════════════════════════════════════════
+//  UPLOAD
+// ════════════════════════════════════════════
+let uOpts={exif:true,thumbs:true,webp:false,wm:false,compress:false,av:true};
+let uQueue=[];
+
+function rUp(){
+  return`<div class="ph"><div><div class="pt">Subir archivos</div><div class="ps">Hasta 50 archivos · 100 MB máx por archivo</div></div></div>
+  <div class="uz" id="dz" ondragover="this.classList.add('drag');event.preventDefault()" ondragleave="this.classList.remove('drag')" ondrop="hDrop(event)" onclick="document.getElementById('fIn').click()">
+    <span class="uz-ic">🖼</span><div class="uz-t">Arrastra imágenes aquí</div><div class="uz-s">o haz clic para seleccionar desde tu equipo</div>
+    <div class="fmts">${['JPEG','PNG','WebP','AVIF','SVG','TIFF','RAW','GIF','HEIC'].map(f=>`<span class="fpill">.${f.toLowerCase()}</span>`).join('')}</div>
+  </div>
+  <input type="file" id="fIn" multiple accept="image/*" style="display:none" onchange="hFiles(this.files)">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0">
+    <div>
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:10px">DESTINO</div>
+      <div class="fg"><div class="fl">Carpeta</div><select class="fi" id="uFold"><option>Marketing</option><option>Productos</option><option>Branding</option><option>RRHH</option><option>Reportes</option><option>Eventos</option><option>+ Nueva carpeta...</option></select></div>
+      <div class="fg"><div class="fl">Tags automáticos</div><input class="fi" id="uTags" type="text" placeholder="marketing, producto, 2024..."></div>
+      <div class="fg"><div class="fl">Licencia</div><select class="fi"><option>Uso interno</option><option>CC-BY</option><option>Copyright</option></select></div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:10px">PROCESAMIENTO</div>
+      <div class="ogrid">
+        ${[['exif','📍 Extraer EXIF','Fecha, GPS, cámara'],['thumbs','🖼 Thumbnails','100, 400, 800px'],['webp','⚡ Convertir WebP','-40% tamaño'],['wm','🔏 Marca de agua','Logo corporativo'],['compress','📦 Compresión','Sin pérdida visible'],['av','🛡 Antivirus','Scan en tiempo real']].map(([k,n,d])=>`<div class="oc ${uOpts[k]?'chk':''}" onclick="tOpt('${k}',this)"><div class="ochk">${uOpts[k]?'✓':''}</div><div><div class="oname">${n}</div><div class="odesc">${d}</div></div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div id="uQ"></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-p" id="uBtn" onclick="startUp()" style="display:none">⬆ Iniciar subida</button><button class="btn btn-g" onclick="nav('library')">Ver biblioteca</button></div>`;
+}
+
+function hDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');hFiles(e.dataTransfer.files);}
+function hFiles(files){
+  if(!files.length)return;
+  uQueue=Array.from(files).map(f=>({name:f.name,size:(f.size/1048576).toFixed(1)+' MB',type:f.type,prog:0,status:'pending'}));
+  renderQ();
+  const btn=document.getElementById('uBtn');
+  if(btn)btn.style.display='flex';
+}
+function renderQ(){
+  const el=document.getElementById('uQ');if(!el)return;
+  el.innerHTML=uQueue.map((f,i)=>`<div class="upi"><div class="upth">${f.type.includes('svg')?'🎨':f.type.includes('png')?'🖼':'📷'}</div><div class="upin"><div class="upn">${f.name}</div><div class="upbb"><div class="upbf" id="ub${i}" style="width:${f.prog}%;background:${f.status==='done'?'var(--green)':'var(--accent)'}"></div></div><div class="upst" id="us${i}">${f.status==='done'?'✅ Completado':f.status==='uploading'?f.prog+'% subiendo...':'En espera'}</div></div>${f.status==='done'?'<span style="color:var(--green);font-size:18px">✓</span>':''}</div>`).join('');
+}
+function tOpt(k,el){uOpts[k]=!uOpts[k];el.classList.toggle('chk',uOpts[k]);el.querySelector('.ochk').textContent=uOpts[k]?'✓':'';}
+function startUp(){
+  if(!uQueue.length){toast('⚠️ Selecciona archivos primero');return;}
+  uQueue.forEach((_,i)=>setTimeout(()=>upFile(i),i*400));
+}
+function upFile(i){
+  uQueue[i].status='uploading';let p=0;
+  const iv=setInterval(()=>{
+    p=Math.min(p+Math.random()*18,100);uQueue[i].prog=Math.floor(p);
+    const b=document.getElementById('ub'+i),s=document.getElementById('us'+i);
+    if(b)b.style.width=p+'%';if(s)s.textContent=Math.floor(p)+'% subiendo...';
+    if(p>=100){clearInterval(iv);uQueue[i].status='done';if(s)s.textContent='✅ Completado';addImg(uQueue[i]);
+      if(uQueue.every(f=>f.status==='done'))setTimeout(()=>{toast('✅ '+uQueue.length+' archivo(s) subidos');setTimeout(()=>nav('library'),1000);},400);}
+  },120);
+}
+function addImg(f){
+  const imgs=DB.get('images')||[];
+  const tags=(document.getElementById('uTags')?.value||'').split(',').map(t=>t.trim()).filter(Boolean);
+  imgs.unshift({id:'i'+Date.now(),name:f.name,size:f.size,dims:'Procesando...',fmt:f.name.split('.').pop().toUpperCase(),tags,folder:document.getElementById('uFold')?.value||'General',color:'#5b7cf6',user:CU?.id||'u1',date:new Date().toISOString().slice(0,10),desc:'',lic:'Uso interno',versions:[{v:1,date:new Date().toISOString().slice(0,10),size:f.size,note:'Subida inicial'}]});
+  DB.set('images',imgs);updateBadges();
+}
+
+// ════════════════════════════════════════════
+//  ACTIONS
+// ════════════════════════════════════════════
+function dlImg(id,e){if(e)e.stopPropagation();const imgs=DB.get('images')||[];const img=imgs.find(i=>i.id===id);toast('⬇ Descargando: '+(img?.name||'archivo'));addSecLog('✅','Descarga',img?.name||id);}
+
+function openShare(id,e){
+  if(e)e.stopPropagation();
+  document.getElementById('shLink').value='https://dam.co/sh/'+Math.random().toString(36).slice(2,8);
+  document.getElementById('moShare').dataset.iid=id;
+  openMo('moShare');
+}
+function copyLink(){navigator.clipboard?.writeText(document.getElementById('shLink').value).catch(()=>{});toast('🔗 Enlace copiado');}
+function createShare(){
+  const id=document.getElementById('moShare').dataset.iid;
+  const imgs=DB.get('images')||[];const img=imgs.find(i=>i.id===id);
+  const shared=DB.get('shared')||[];
+  shared.push({id:'s'+Date.now(),iid:id,name:img?.name||'asset',by:CU?.id||'u1',views:0,exp:document.getElementById('shExp').value,status:'active',link:document.getElementById('shLink').value});
+  DB.set('shared',shared);closeMo('moShare');toast('✅ Enlace seguro creado');
+}
+
+function bDl(){toast('⬇ Descargando '+SEL.length+' imgs en ZIP...');SEL=[];if(PAGE==='library')nav('library');}
+function bMeta(){toast('✏ Editor masivo (próximamente)');} 
+function bMove(){const f=prompt('Mover a carpeta:','Marketing');if(!f)return;const imgs=DB.get('images')||[];SEL.forEach(id=>{const idx=imgs.findIndex(i=>i.id===id);if(idx>=0)imgs[idx].folder=f;});DB.set('images',imgs);SEL=[];nav('library');toast('📁 Movidas a '+f);}
+function bDel(){const imgs=DB.get('images')||[];const tr=DB.get('trash')||[];SEL.forEach(id=>{const idx=imgs.findIndex(i=>i.id===id);if(idx>=0){tr.push({id:'t'+Date.now()+idx,name:imgs[idx].name,size:imgs[idx].size,fmt:imgs[idx].fmt,deleted:new Date().toISOString().slice(0,10),days:30});imgs.splice(idx,1);}});DB.set('images',imgs);DB.set('trash',tr);SEL=[];nav('library');toast('🗑 Movidas a papelera');updateBadges();}
+function sendInvite(){const e=document.getElementById('invEmails').value;if(!e.trim()){toast('⚠️ Ingresa correos');return;}const list=e.split(',').map(x=>x.trim()).filter(x=>x.includes('@'));const users=DB.get('users')||[];list.forEach(email=>{if(!users.find(u=>u.email===email))users.push({id:'u'+Date.now()+Math.random(),first:email.split('@')[0],last:'(pendiente)',email,pw:hp('Temp1234!'),role:document.getElementById('invRole').value,company:'Acme Corp',su:0,sm:5,ac:'#5b7cf6,#1fdb8a',created:new Date().toISOString().slice(0,10),tfa:false,ll:'—'});});DB.set('users',users);closeMo('moInvite');toast('✉ Invitaciones enviadas a '+list.length+' correo(s)');if(PAGE==='team')nav('team');}
+
+// ════════════════════════════════════════════
+//  CTX MENU
+// ════════════════════════════════════════════
+document.addEventListener('click',()=>document.getElementById('ctx').classList.remove('open'));
+function showCtx(e,id){e.preventDefault();CTX=id;const m=document.getElementById('ctx');m.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-290)+'px';m.classList.add('open');}
+function ctxAct(a){
+  document.getElementById('ctx').classList.remove('open');
+  if(!CTX)return;
+  if(a==='view')openPImg(CTX,null);
+  else if(a==='edit')openMeta(CTX);
+  else if(a==='download')dlImg(CTX,null);
+  else if(a==='share')openShare(CTX,null);
+  else if(a==='versions'){openPImg(CTX,null);toast('📋 Versiones del archivo');}
+  else if(a==='move'){const f=prompt('Mover a carpeta:','Marketing');if(f){const imgs=DB.get('images')||[];const idx=imgs.findIndex(i=>i.id===CTX);if(idx>=0){imgs[idx].folder=f;DB.set('images',imgs);nav('library');toast('📁 Movido a '+f);}}}
+  else if(a==='delete'){const imgs=DB.get('images')||[];const tr=DB.get('trash')||[];const idx=imgs.findIndex(i=>i.id===CTX);if(idx>=0){tr.push({id:'t'+Date.now(),name:imgs[idx].name,size:imgs[idx].size,fmt:imgs[idx].fmt,deleted:new Date().toISOString().slice(0,10),days:30});imgs.splice(idx,1);DB.set('images',imgs);DB.set('trash',tr);nav('library');toast('🗑 Movida a papelera');updateBadges();}}
+}
+
+// ════════════════════════════════════════════
+//  PANELS & MODALS
+// ════════════════════════════════════════════
+function togglePanel(id){['pImg','pNotif'].forEach(p=>{if(p!==id)document.getElementById(p).classList.remove('open');});document.getElementById(id).classList.toggle('open');if(id==='pNotif')renderNotifs();}
+function closeAll(){['pImg','pNotif'].forEach(id=>document.getElementById(id).classList.remove('open'));}
+function openMo(id){document.getElementById(id).classList.add('open');}
+function closeMo(id){document.getElementById(id).classList.remove('open');}
+function closeMoAll(){document.querySelectorAll('.mo').forEach(m=>m.classList.remove('open'));}
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)closeMo(this.id);}));
+
+function renderNotifs(){
+  const notifs=DB.get('notifs')||[];
+  const unread=notifs.filter(n=>!n.read).length;
+  document.getElementById('ndot').style.display=unread?'block':'none';
+  document.getElementById('pNotifB').innerHTML=notifs.map(n=>`<div style="display:flex;gap:10px;padding:9px 12px;border-radius:var(--r);background:var(--surface);margin-bottom:6px;cursor:pointer;transition:background .15s;border-left:${n.read?'2px solid transparent':'2px solid var(--accent)'}" onclick="markRead('${n.id}')" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'"><div style="width:28px;height:28px;border-radius:7px;background:${n.color}22;color:${n.color};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${n.icon}</div><div style="flex:1"><div style="font-size:12px;font-weight:${n.read?'400':'600'}">${n.title}</div><div style="font-size:10px;color:var(--text3)">${n.desc} · ${n.time}</div></div>${!n.read?'<div style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px"></div>':''}</div>`).join('');}
+
+function markRead(id){const n=DB.get('notifs')||[];const x=n.find(x=>x.id===id);if(x)x.read=true;DB.set('notifs',n);renderNotifs();}
+function markAllRead(){const n=DB.get('notifs')||[];n.forEach(x=>x.read=true);DB.set('notifs',n);renderNotifs();toast('✅ Todas leídas');}
+
+// ════════════════════════════════════════════
+//  PLACEHOLDER RENDERS (Part 2 will replace)
+// ════════════════════════════════════════════
+function rTeam(){return '<div class="empty"><div class="empty-ic">👥</div><div class="empty-t">Cargando módulo Team...</div><div class="empty-s">Parte 2 del sistema</div></div>';}
+function rAnalytics(){return '<div class="empty"><div class="empty-ic">📊</div><div class="empty-t">Cargando módulo Analytics...</div></div>';}
+function animCharts(){}
+function rSec(){return '<div class="empty"><div class="empty-ic">🛡</div><div class="empty-t">Cargando módulo Seguridad...</div></div>';}
+function rPlans(){return '<div class="empty"><div class="empty-ic">💳</div><div class="empty-t">Cargando módulo Planes...</div></div>';}
+function rColl(){return '<div class="empty"><div class="empty-ic">📁</div><div class="empty-t">Cargando módulo Colecciones...</div></div>';}
+function rShared(){return '<div class="empty"><div class="empty-ic">🔗</div><div class="empty-t">Cargando módulo Compartidos...</div></div>';}
+function rAPI(){return '<div class="empty"><div class="empty-ic">⚙️</div><div class="empty-t">Cargando módulo API...</div></div>';}
+function rTrash(){return '<div class="empty"><div class="empty-ic">🗑</div><div class="empty-t">Cargando módulo Papelera...</div></div>';}
+
+// ════════════════════════════════════════════
+//  TOUR
+// ════════════════════════════════════════════
+const TOUR=[
+  {title:'Bienvenido a DAMvault',desc:'Este tour interactivo te guiará por todas las funciones principales. Navega con los botones o presiona Esc para salir.',el:'#tourBtn',pos:'bottom'},
+  {title:'Panel de navegación',desc:'Accede a todas las secciones desde aquí: Dashboard, Biblioteca, Subidas, Equipo, Analytics, Seguridad y más.',el:'#sb',pos:'right'},
+  {title:'Búsqueda global',desc:'Busca imágenes en tiempo real por nombre, tags, carpeta o metadata. Los resultados se filtran instantáneamente.',el:'.srch',pos:'bottom'},
+  {title:'Monitor de almacenamiento',desc:'Visualiza tu uso en tiempo real. Haz clic para gestionar tu plan y ampliar la cuota de 5 GB.',el:'#spill',pos:'bottom'},
+  {title:'Biblioteca de imágenes',desc:'Vista grid o lista. Shift+clic para selección múltiple. Clic derecho para menú de acciones rápidas.',el:'#n-library',pos:'right'},
+  {title:'Subir archivos',desc:'Arrastra o selecciona imágenes. 9 formatos soportados. Procesamiento automático: EXIF, thumbnails, WebP, antivirus.',el:'#n-upload',pos:'right'},
+  {title:'Gestión de equipo',desc:'Invita miembros, asigna roles (Admin/Editor/Viewer) y controla permisos granulares por acción.',el:'#n-team',pos:'right'},
+  {title:'Analytics',desc:'Monitorea descargas, vistas, uso por carpeta y actividad. Exporta reportes en PDF o CSV.',el:'#n-analytics',pos:'right'},
+  {title:'API & Webhooks',desc:'Integra DAMvault con tus apps via REST API. Gestiona keys, webhooks y consulta la documentación.',el:'#n-api',pos:'right'},
+  {title:'Seguridad',desc:'2FA, AES-256, rate limiting, logs de auditoría, antivirus. Certificado SOC 2, ISO 27001 y GDPR.',el:'#n-security',pos:'right'},
+];
+
+let TI=0;
+function startTour(){TI=0;document.getElementById('tourOv').classList.add('on');renderTour();}
+function endTour(){document.getElementById('tourOv').classList.remove('on');DB.set('tourDone',true);toast('✅ Tour completado. ¡Bienvenido!');}
+function moveTour(d){TI+=d;if(TI<0)TI=0;if(TI>=TOUR.length){endTour();return;}renderTour();}
+function renderTour(){
+  const s=TOUR[TI];const total=TOUR.length;
+  document.getElementById('tstep').textContent='PASO '+(TI+1)+' DE '+total;
+  document.getElementById('ttit').textContent=s.title;
+  document.getElementById('tdesc').textContent=s.desc;
+  document.getElementById('tprev').style.display=TI===0?'none':'block';
+  document.getElementById('tnext').textContent=TI===total-1?'¡Listo! ✓':'Siguiente →';
+  document.getElementById('tdots').innerHTML=TOUR.map((_,i)=>`<div class="tdot ${i===TI?'on':''}"></div>`).join('');
+  const el=document.querySelector(s.el);
+  if(el){
+    const r=el.getBoundingClientRect(),pad=6;
+    const hl=document.getElementById('thl');
+    hl.style.cssText=`left:${r.left-pad}px;top:${r.top-pad}px;width:${r.width+pad*2}px;height:${r.height+pad*2}px`;
+    const tc=document.getElementById('tc');
+    let cx=r.left,cy=r.bottom+14;
+    if(s.pos==='right'){cx=r.right+14;cy=r.top;}
+    if(cy+230>window.innerHeight)cy=r.top-240;
+    if(cx+300>window.innerWidth)cx=window.innerWidth-310;
+    tc.style.cssText=`left:${Math.max(10,cx)}px;top:${Math.max(10,cy)}px`;
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('tourOv').classList.contains('on'))endTour();});
+
+// ════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════
+let _tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+initDB();
+const sess=DB.get('sess');
+if(sess&&sess.exp>Date.now()){
+  const u=(DB.get('users')||[]).find(u=>u.id===sess.uid);
+  if(u){CU=u;showApp();}
+  
+}
+function rTeam(){
+  const users=DB.get('users')||[];
+  const rc={admin:'background:var(--rdim);color:var(--red)',editor:'background:var(--adim);color:var(--accent2)',viewer:'background:var(--gdim);color:var(--green)',guest:'background:var(--surface2);color:var(--text3)'};
+  return`<style>
+  .ttbl{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
+  .tth,.ttr{padding:10px 14px;display:grid;grid-template-columns:2fr 1.5fr 90px 70px 110px 100px;gap:10px;align-items:center}
+  .tth{border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+  .ttr{border-bottom:1px solid var(--border);font-size:12px;transition:background .15s;cursor:pointer}
+  .ttr:last-child{border-bottom:none}.ttr:hover{background:var(--surface)}
+  .ptbl{width:100%;border-collapse:collapse;font-size:12px}
+  .ptbl th{padding:8px 10px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;text-align:center;border-bottom:1px solid var(--border)}
+  .ptbl th:first-child{text-align:left}
+  .ptbl td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--text3)}
+  .ptbl td:first-child{text-align:left;color:var(--text2)}.ptbl tr:last-child td{border-bottom:none}
+  @media(max-width:700px){.tth,.ttr{grid-template-columns:1.5fr 90px 100px}.tth>*:nth-child(n+3):not(:nth-child(3)):not(:nth-child(6)),.ttr>*:nth-child(n+3):not(:nth-child(3)):not(:nth-child(6)){display:none}}
+  </style>
+  <div class="ph"><div><div class="pt">Gestión de equipo</div><div class="ps">${users.length} miembros en tu organización</div></div>
+  <div class="pa"><button class="btn btn-g" onclick="openMo('moInvite')">📧 Invitar</button><button class="btn btn-p" onclick="openMo('moInvite')">+ Agregar</button></div></div>
+  <div class="ttbl">
+    <div class="tth"><div>Usuario</div><div>Correo</div><div>Rol</div><div>Assets</div><div>Almacenamiento</div><div>Acciones</div></div>
+    ${users.map(u=>`<div class="ttr">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="av av-sm" style="background:linear-gradient(135deg,${u.ac})">${(u.first[0]+u.last[0]).toUpperCase()}</div>
+        <div><div style="font-size:12px;font-weight:500">${u.first} ${u.last}</div><div style="font-size:10px;color:var(--text3)">${u.ll==='—'?'Pendiente':new Date(u.ll).toLocaleDateString('es')}</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.email}</div>
+      <div><span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500;${rc[u.role]||rc.guest}">${u.role.charAt(0).toUpperCase()+u.role.slice(1)}</span></div>
+      <div style="font-size:12px;font-weight:500">${Math.floor(Math.random()*80+10)}</div>
+      <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${u.su||0}/${u.sm||5}GB</div><div style="height:4px;background:var(--border);border-radius:2px;width:80px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:2px;width:${Math.round(((u.su||0)/(u.sm||5))*100)}%"></div></div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-g" style="font-size:11px;padding:4px 9px" onclick="chgRole('${u.id}')">✏ Rol</button>
+        ${u.id!==CU?.id?`<button class="btn btn-d" style="font-size:11px;padding:4px 9px" onclick="rmUser('${u.id}')">✕</button>`:'<span style="font-size:10px;color:var(--text3);padding:4px">Tú</span>'}
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="card" style="margin-bottom:20px"><div style="font-size:13px;font-weight:600;margin-bottom:14px">🔑 Permisos por rol</div>
+    <div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Permiso</th><th style="color:var(--red)">Admin</th><th style="color:var(--accent2)">Editor</th><th style="color:var(--green)">Viewer</th><th style="color:var(--text3)">Guest</th></tr></thead><tbody>
+      ${[['Ver imágenes','✅','✅','✅','✅'],['Subir archivos','✅','✅','❌','❌'],['Editar metadata','✅','✅','❌','❌'],['Eliminar archivos','✅','❌','❌','❌'],['Compartir enlaces','✅','✅','❌','❌'],['Gestionar equipo','✅','❌','❌','❌'],['Ver analytics','✅','✅','❌','❌'],['Gestionar API','✅','❌','❌','❌'],['Config. seguridad','✅','❌','❌','❌'],['Papelera','✅','✅','❌','❌']].map(([p,...v])=>`<tr><td>${p}</td>${v.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:12px">📋 Actividad del equipo</div>
+    ${[['📤','var(--accent)','Carlos subió 5 imágenes','Productos','Hace 5 min'],['👁','var(--green)','Ana revisó galería','Marketing','Hace 20 min'],['🔗','var(--amber)','María compartió enlace','hero-banner','Hace 1h'],['⬇','var(--purple)','Diego descargó 3 archivos','Logo pack','Hace 2h']].map(([ic,col,t,d,time])=>`
+    <div style="display:flex;gap:10px;padding:9px;border-radius:var(--r);cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'">
+      <div style="width:28px;height:28px;border-radius:7px;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${ic}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500">${t}</div><div style="font-size:10px;color:var(--text3)">${d}</div></div>
+      <div style="font-size:10px;color:var(--text3)">${time}</div>
+    </div>`).join('')}
+  </div>`;
+}
+function chgRole(uid){const users=DB.get('users')||[];const u=users.find(x=>x.id===uid);if(!u)return;const roles=['admin','editor','viewer','guest'];u.role=roles[(roles.indexOf(u.role)+1)%roles.length];DB.set('users',users);toast('✅ '+u.first+' → '+u.role);nav('team');}
+function rmUser(uid){const users=DB.get('users')||[];const u=users.find(x=>x.id===uid);if(!u||!confirm('¿Eliminar a '+u.first+'?'))return;DB.set('users',users.filter(x=>x.id!==uid));toast('🗑 '+u.first+' eliminado');nav('team');}
+
+// ANALYTICS
+function rAnalytics(){
+  const users=DB.get('users')||[];
+  return`<style>
+  .brow{display:flex;align-items:center;gap:10px}.blbl{width:90px;font-size:11px;color:var(--text2);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bbg{flex:1;height:22px;background:var(--surface);border-radius:4px;overflow:hidden}.bfill{height:100%;border-radius:4px;transition:width 1.3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:7px}
+  .bval{font-size:10px;font-weight:600;color:#fff;font-family:'JetBrains Mono',monospace}
+  </style>
+  <div class="ph"><div><div class="pt">Analytics & Reportes</div><div class="ps">Métricas en tiempo real</div></div>
+  <div class="pa"><select class="ssort"><option>30 días</option><option>7 días</option><option>Este mes</option></select><button class="btn btn-g" onclick="toast('📄 PDF...')">⬇ PDF</button><button class="btn btn-g" onclick="toast('📊 CSV...')">⬇ CSV</button></div></div>
+  <div class="sg" style="margin-bottom:22px">
+    ${[['📥','var(--accent)','1,248','Descargas','↑ +23%'],['👁','var(--green)','8,430','Vistas','↑ +18%'],['🔗','var(--amber)','342','Clics enlaces','↓ -5%'],['📤','var(--purple)','89','Subidas','↑ +31%'],['👥','var(--cyan)',users.length,'Usuarios','Estable'],['💾','var(--pink)','3.7 GB','Storage','74%']].map(([ic,col,val,lbl,chg])=>`
+    <div class="sc"><div class="si" style="background:${col}22;font-size:16px">${ic}</div><div class="sv" style="color:${col};font-size:22px">${val}</div><div class="sl">${lbl}</div><div class="sch" style="color:${chg.includes('↑')?'var(--green)':chg.includes('↓')?'var(--red)':'var(--text3)'}">${chg}</div></div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:4px">Más descargadas</div><div style="font-size:11px;color:var(--text3);margin-bottom:14px">Este mes</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${[['hero-banner',92,'var(--accent)'],['producto-laptop',78,'var(--green)'],['campaña-verano',65,'var(--purple)'],['logo-variantes',54,'var(--cyan)'],['equipo-directivo',41,'var(--amber)']].map(([n,v,c])=>`<div class="brow"><div class="blbl">${n}</div><div class="bbg"><div class="bfill" data-v="${v}" style="width:0%;background:${c}"><span class="bval">${v}</span></div></div></div>`).join('')}
+      </div>
+    </div>
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:4px">Uso por carpeta</div><div style="font-size:11px;color:var(--text3);margin-bottom:14px">Distribución</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${[['Marketing',45,'var(--accent)'],['Productos',23,'var(--green)'],['Branding',15,'var(--purple)'],['RRHH',10,'var(--amber)'],['Reportes',7,'var(--red)']].map(([n,v,c])=>`<div class="brow"><div class="blbl">${n}</div><div class="bbg"><div class="bfill" data-v="${v}" style="width:0%;background:${c}"><span class="bval">${v}%</span></div></div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:14px">Actividad reciente</div>
+      ${[['📤','var(--accent)','Carlos subió 5 imgs','Productos','5 min'],['👁','var(--green)','Ana revisó galería','Marketing','20 min'],['🔗','var(--amber)','María compartió enlace','hero-banner','1h'],['⬇','var(--purple)','Diego descargó 3 arch.','Logo pack','2h']].map(([ic,col,t,d,time])=>`
+      <div style="display:flex;gap:10px;padding:8px;border-radius:var(--r);cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'">
+        <div style="width:28px;height:28px;border-radius:7px;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${ic}</div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">${t}</div><div style="font-size:10px;color:var(--text3)">${d}</div></div>
+        <div style="font-size:10px;color:var(--text3)">${time}</div>
+      </div>`).join('')}
+    </div>
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:14px">Rendimiento</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${[['⚡','99.9%','Uptime','var(--green)'],['🚀','<80ms','Resp. API','var(--accent)'],['📦','38%','Compr. WebP','var(--purple)'],['🛡','0','Incidentes','var(--green)'],['🔗','87%','CDN rate','var(--cyan)'],['📋','4.9/5','Satisfacción','var(--amber)']].map(([ic,val,lbl,col])=>`<div style="background:var(--surface);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:18px;margin-bottom:4px">${ic}</div><div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:${col};margin-bottom:2px">${val}</div><div style="font-size:10px;color:var(--text3)">${lbl}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function animCharts(){setTimeout(()=>{document.querySelectorAll('.bfill').forEach(b=>b.style.width=(b.dataset.v||0)+'%');},150);}
+
+// SECURITY
+function rSec(){
+  const opts=DB.get('secopts')||{tfa:true,jwt:true,rl:true,aes:true,log:true,av:true,cors:true,auto:false,wl:false,single:false};
+  const log=DB.get('seclog')||[];
+  const active=Object.values(opts).filter(Boolean).length,total=Object.keys(opts).length;
+  const score=Math.round((active/total)*100);
+  const items=[['🔐','tfa','2FA','TOTP / SMS / FIDO2','var(--green)'],['🎫','jwt','Tokens JWT','Exp: 24h · Refresh: 7d','var(--accent)'],['🚫','rl','Rate Limiting','100 req/min · 5 fallos=ban','var(--accent)'],['🔒','aes','AES-256','Reposo y TLS 1.3 tránsito','var(--green)'],['📋','log','Audit Logs','Todos los accesos 90 días','var(--accent)'],['🦠','av','Antivirus','Scan en tiempo real','var(--green)'],['🌐','cors','CORS','Solo dominios autorizados','var(--accent)'],['⏱','auto','Auto-logout','Inactividad 30 min','var(--amber)'],['📍','wl','IP Whitelist','Solo IPs aprobadas','var(--purple)'],['🔂','single','Sesión única','Un dispositivo activo','var(--cyan)']];
+  return`<style>
+  .scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:border .15s}
+  .scard:hover{border-color:var(--border3)}.sic{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;transition:all .2s}
+  .sw{width:40px;height:22px;background:var(--surface2);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:1px solid var(--border2)}
+  .sw.on{background:var(--accent);border-color:var(--accent)}.sk{position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}.sw.on .sk{left:20px}
+  </style>
+  <div class="ph"><div><div class="pt">Seguridad & Privacidad</div><div class="ps">Estado del sistema</div></div><div class="pa"><button class="btn btn-g" onclick="toast('📋 Descargando...')">⬇ Reporte</button></div></div>
+  <div style="background:linear-gradient(135deg,var(--adim),var(--gdim));border:1px solid rgba(91,124,246,.2);border-radius:var(--rl);padding:20px;display:flex;align-items:center;gap:18px;margin-bottom:18px;flex-wrap:wrap">
+    <div style="width:70px;height:70px;flex-shrink:0;position:relative">
+      <svg viewBox="0 0 70 70" width="70" height="70"><circle cx="35" cy="35" r="28" fill="none" stroke="var(--border)" stroke-width="5"/><circle cx="35" cy="35" r="28" fill="none" stroke="var(--green)" stroke-width="5" stroke-dasharray="${(active/total)*175.9} 175.9" stroke-linecap="round" transform="rotate(-90 35 35)"/></svg>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--green)">${score}</div>
+    </div>
+    <div><div style="font-size:15px;font-weight:600;color:var(--green);margin-bottom:4px">Sistema ${score>=80?'seguro':'en riesgo'}</div><div style="font-size:12px;color:var(--text2);margin-bottom:4px">${active} / ${total} controles activos</div><div style="font-size:11px;color:var(--text3)">Última auditoría: hace 2 días</div></div>
+    <div style="margin-left:auto;display:flex;flex-direction:column;gap:5px">
+      ${[['✓ SOC 2','var(--green)'],['✓ ISO 27001','var(--accent2)'],['✓ GDPR','var(--green)']].map(([l,c])=>`<div style="font-size:10px;padding:3px 10px;border-radius:4px;background:${c}22;color:${c};font-weight:500">${l}</div>`).join('')}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+    ${items.map(([ic,key,name,desc,col])=>`<div class="scard" id="sc-${key}">
+      <div class="sic" style="background:${opts[key]?col+'22':'var(--surface2)'};color:${opts[key]?col:'var(--text3)'}">${ic}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500;margin-bottom:2px">${name}</div><div style="font-size:11px;color:var(--text3)">${desc}</div></div>
+      <div class="sw ${opts[key]?'on':''}" onclick="tSec('${key}','${col}',this)"><div class="sk"></div></div>
+    </div>`).join('')}
+  </div>
+  <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:14px">📊 Log de seguridad</div>
+    <div>${log.slice(0,8).map(l=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px"><div style="font-size:14px;width:20px;text-align:center">${l.icon}</div><div style="flex:1"><div style="font-weight:500">${l.title}</div><div style="font-size:10px;color:var(--text3)">${l.detail}</div></div><div style="font-size:10px;color:var(--text3)">${l.time}</div></div>`).join('')}</div>
+  </div>`;
+}
+function tSec(key,col,el){const opts=DB.get('secopts')||{};opts[key]=!opts[key];DB.set('secopts',opts);el.classList.toggle('on',opts[key]);const c=document.getElementById('sc-'+key);if(c){const i=c.querySelector('.sic');if(i){i.style.background=opts[key]?col+'22':'var(--surface2)';i.style.color=opts[key]?col:'var(--text3)';}}addSecLog(opts[key]?'✅':'⚠️','Control',key+' → '+(opts[key]?'ON':'OFF'));toast((opts[key]?'🔒 ':'🔓 ')+key+' '+(opts[key]?'activado':'desactivado'));}
+
+// PLANS
+function rPlans(){
+  return`<style>
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+  .pcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;position:relative;transition:all .2s}
+  .pcard:hover{border-color:var(--border3);transform:translateY(-2px)}.pcard.feat{border-color:rgba(91,124,246,.4);background:rgba(91,124,246,.04)}
+  .pbadge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--accent),var(--purple));color:#fff;font-size:10px;padding:3px 12px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .pfeat{font-size:12px;color:var(--text2);padding:5px 0;display:flex;gap:7px}
+  .agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .acard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px;display:flex;gap:10px;align-items:flex-start;transition:border .15s}
+  .acard:hover{border-color:var(--border3)}
+  @media(max-width:700px){.pgrid,.agrid{grid-template-columns:1fr}}
+  </style>
+  <div class="ph"><div><div class="pt">Planes & Almacenamiento</div><div class="ps">Suscripción y complementos</div></div></div>
+  <div class="pgrid">
+    ${[['Free','0',false,['5 GB almacenamiento',null,'1 usuario',null,'Formatos básicos',null,'Soporte comunidad',null],'Empezar gratis'],['Pro','29',true,['50 GB almacenamiento','10 usuarios','Todos los formatos','API REST completa','Analytics avanzado','CDN global','Soporte prioritario','2FA avanzado'],'Plan actual'],['Enterprise','99',false,['Almacenamiento ilimitado','Usuarios ilimitados','SSO / LDAP / SAML','SLA 99.99%','Onboarding dedicado','Soporte 24/7','Audit logs avanzados','Custom branding'],'Contactar ventas']].map(([name,price,feat,feats,cta])=>`
+    <div class="pcard ${feat?'feat':''}">
+      ${feat?'<div class="pbadge">✨ Plan actual</div>':''}
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">${name}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;margin-bottom:2px">$${price}<span style="font-size:14px;font-weight:400;color:var(--text3)">/mes</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px">${name==='Pro'?'Anual — ahorra 20%':name==='Enterprise'?'Precio personalizado':'Sin tarjeta requerida'}</div>
+      <div style="margin-bottom:18px">${feats.map(f=>f?`<div class="pfeat"><span style="color:var(--green)">✓</span>${f}</div>`:`<div class="pfeat"><span style="color:var(--text4)">–</span><span style="color:var(--text4)">No incluido</span></div>`).join('')}</div>
+      <button class="btn ${feat?'btn-p':'btn-g'} btn-full" onclick="toast('💳 Redirigiendo...')">${cta}</button>
+    </div>`).join('')}
+  </div>
+  <div class="card" style="margin-bottom:16px"><div style="font-size:13px;font-weight:600;margin-bottom:14px">⚡ Complementos</div>
+    <div class="agrid">
+      ${[['🤖','IA Auto-tagging','$9/mes','Tags automáticos con visión IA'],['📦','Storage +50 GB','$12/mes','Amplía tu almacenamiento'],['🌐','CDN Premium','$19/mes','Entrega 150+ países'],['🔌','API Avanzada','$15/mes','Rate limits + Webhooks'],['📊','Analytics Pro','$9/mes','Reportes + heatmaps'],['🔏','Firma digital','$12/mes','Certificación de assets'],['🎨','Editor','$19/mes','Edición básica integrada'],['🔄','Sync Drive','$9/mes','Google Drive / Dropbox']].map(([ic,n,p,d])=>`
+      <div class="acard"><div style="font-size:22px;flex-shrink:0">${ic}</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;margin-bottom:2px">${n}</div><div style="font-size:10px;color:var(--text3)">${d}</div></div><button class="btn btn-g" style="font-size:11px;padding:4px 9px;flex-shrink:0" onclick="toast('➕ Agregado')">${p}</button></div>`).join('')}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:12px">💳 Facturación</div>
+      ${[['Plan','Pro — $29/mes','var(--accent2)'],['Próx. cobro','2024-02-01',''],['Método','•••• 4242',''],['Ciclo','Anual (-20%)','']].map(([k,v,col])=>`<div class="irow"><div class="ikey">${k}</div><div class="ival" style="color:${col||'var(--text2)'}">${v}</div></div>`).join('')}
+      <button class="btn btn-g" style="font-size:11px;margin-top:10px;width:100%" onclick="toast('📄 Facturas...')">Ver historial</button>
+    </div>
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:12px">📊 Uso del plan</div>
+      ${[['Storage','3.7/50 GB',7],['Usuarios','4/10',40],['API calls','12,840/100k',13],['Webhooks','2/10',20]].map(([l,v,p])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--text2)">${l}</span><span style="font-family:'JetBrains Mono',monospace;color:var(--text3)">${v}</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:2px;width:${p}%"></div></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// COLLECTIONS
+function rColl(){
+  const colls=DB.get('collections')||[];
+  return`<div class="ph"><div><div class="pt">Colecciones</div><div class="ps">${colls.length} colecciones activas</div></div><div class="pa"><button class="btn btn-p" onclick="newColl()">+ Nueva</button></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+    ${colls.map(c=>`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--border3)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'" onclick="toast('📂 ${c.name}')">
+      <div style="width:46px;height:46px;border-radius:12px;background:${c.color}22;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px">${c.icon}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px">${c.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${c.count} imgs · ${c.created}</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-g" style="font-size:11px;padding:4px 9px;flex:1" onclick="event.stopPropagation();toast('✏ Editando')">✏</button>
+        <button class="btn btn-g" style="font-size:11px;padding:4px 9px" onclick="event.stopPropagation();openShare('col-${c.id}',event)">🔗</button>
+        <button class="btn btn-d" style="font-size:11px;padding:4px 9px" onclick="event.stopPropagation();delColl('${c.id}')">🗑</button>
+      </div>
+    </div>`).join('')}
+    <div style="background:var(--bg2);border:2px dashed var(--border3);border-radius:var(--rl);min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--adim)'" onmouseout="this.style.borderColor='var(--border3)';this.style.background='var(--bg2)'" onclick="newColl()">
+      <div style="font-size:32px;opacity:.3;margin-bottom:8px">+</div><div style="font-size:13px;color:var(--text3)">Nueva colección</div>
+    </div>
+  </div>`;
+}
+function newColl(){const name=prompt('Nombre:');if(!name)return;const colls=DB.get('collections')||[];const icons=['📁','🎯','🎨','📦','🌟','💎','🔥','✨'];const colors=['#5b7cf6','#1fdb8a','#b06ef5','#f4a832','#22d3ee','#f05252'];colls.push({id:'c'+Date.now(),name,icon:icons[~~(Math.random()*icons.length)],color:colors[~~(Math.random()*colors.length)],count:0,owner:CU?.id||'u1',created:new Date().toISOString().slice(0,10)});DB.set('collections',colls);nav('collections');toast('✅ "'+name+'" creada');}
+function delColl(id){const colls=DB.get('collections')||[];const c=colls.find(x=>x.id===id);if(!c)return;DB.set('collections',colls.filter(x=>x.id!==id));nav('collections');toast('🗑 Colección eliminada');}
+
+// SHARED
+function rShared(){
+  const shared=DB.get('shared')||[];const users=DB.get('users')||[];
+  return`<style>
+  .stbl2{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+  .sth2,.str2{padding:10px 14px;display:grid;grid-template-columns:2fr 1fr 70px 100px 80px 90px;gap:10px;align-items:center;font-size:12px}
+  .sth2{border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+  .str2{border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}.str2:last-child{border-bottom:none}.str2:hover{background:var(--surface)}
+  @media(max-width:700px){.sth2,.str2{grid-template-columns:2fr 80px 90px}.sth2>*:nth-child(n+3):not(:nth-child(3)):not(:nth-child(6)),.str2>*:nth-child(n+3):not(:nth-child(3)):not(:nth-child(6)){display:none}}
+  </style>
+  <div class="ph"><div><div class="pt">Compartidos</div><div class="ps">${shared.length} enlaces · ${shared.filter(s=>s.status==='active').length} activos</div></div>
+  <div class="pa"><button class="btn btn-d" style="font-size:12px" onclick="revokeAll()">⛔ Revocar todos</button><button class="btn btn-p" onclick="nav('library')">+ Nuevo</button></div></div>
+  <div class="stbl2">
+    <div class="sth2"><div>Archivo</div><div>Por</div><div>Vistas</div><div>Expira</div><div>Estado</div><div>Acciones</div></div>
+    ${shared.length?shared.map(s=>{const ow=users.find(u=>u.id===s.by);return`<div class="str2">
+      <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+      <div style="font-size:11px;color:var(--text2)">${ow?ow.first+' '+ow.last[0]+'.':'—'}</div>
+      <div style="font-weight:500">${s.views}</div>
+      <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${s.exp==='never'?'∞':s.exp}</div>
+      <div><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:${s.status==='active'?'var(--gdim)':'var(--rdim)'};color:${s.status==='active'?'var(--green)':'var(--red)'}">${s.status==='active'?'Activo':'Expirado'}</span></div>
+      <div style="display:flex;gap:4px"><button class="btn btn-g" style="font-size:10px;padding:3px 7px" onclick="copyLnk('${s.link}')">Copiar</button><button class="btn btn-d" style="font-size:10px;padding:3px 7px" onclick="rvkLink('${s.id}')">✕</button></div>
+    </div>`;}).join(''):`<div class="empty" style="padding:40px"><div class="empty-ic">🔗</div><div class="empty-t">Sin enlaces</div></div>`}
+  </div>
+  <div class="card" style="margin-top:16px"><div style="font-size:13px;font-weight:600;margin-bottom:12px">📊 Resumen</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      ${[['🔗',shared.length,'Total'],['✅',shared.filter(s=>s.status==='active').length,'Activos'],['👁',shared.reduce((a,s)=>a+s.views,0),'Vistas'],['⛔',shared.filter(s=>s.status==='expired').length,'Expirados']].map(([ic,val,lbl])=>`<div style="background:var(--surface);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:18px;margin-bottom:4px">${ic}</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:2px">${val}</div><div style="font-size:10px;color:var(--text3)">${lbl}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+function copyLnk(url){navigator.clipboard?.writeText(url).catch(()=>{});toast('🔗 Enlace copiado');}
+function rvkLink(id){const s=DB.get('shared')||[];DB.set('shared',s.filter(x=>x.id!==id));nav('shared');toast('🔗 Revocado');}
+function revokeAll(){if(!confirm('¿Revocar todos los enlaces?'))return;DB.set('shared',[]);nav('shared');toast('⛔ Todos revocados');}
+
+// API
+function rAPI(){
+  const keys=DB.get('apikeys')||[];const hooks=DB.get('webhooks')||[];
+  return`<style>
+  .akrow{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .akv{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11px}
+  .eprow{background:var(--surface);border-radius:var(--r);padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px;cursor:pointer;transition:background .15s}
+  .eprow:hover{background:var(--surface2)}.wrow{background:var(--surface);border-radius:var(--r);padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px}
+  .mth{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0}
+  .mget{background:var(--gdim);color:var(--green)}.mpost{background:var(--adim);color:var(--accent2)}.mdel{background:var(--rdim);color:var(--red)}.mput{background:var(--adim2);color:var(--amber)}
+  </style>
+  <div class="ph"><div><div class="pt">API & Webhooks</div><div class="ps">Integra DAMvault con tus apps</div></div><div class="pa"><button class="btn btn-p" onclick="newKey()">+ Nueva API Key</button></div></div>
+  <div class="tabs" id="apiTabs"><div class="tab on" onclick="swTab(this,'tk')">🔑 API Keys</div><div class="tab" onclick="swTab(this,'th')">🔔 Webhooks</div><div class="tab" onclick="swTab(this,'te')">📋 Endpoints</div><div class="tab" onclick="swTab(this,'td')">📚 Docs</div></div>
+  <div id="tk">
+    ${keys.map(k=>`<div class="akrow"><div style="flex:0 0 auto"><div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px">${k.name}</div><div style="font-size:10px;color:var(--text3)">${k.calls.toLocaleString()} calls · ${k.created}</div></div><div class="akv">${k.key}</div><button class="btn btn-g" style="font-size:11px;padding:4px 9px" onclick="copyLnk('${k.key}')">Copiar</button><button class="btn btn-d" style="font-size:11px;padding:4px 9px" onclick="rvkKey('${k.id}')">Revocar</button></div>`).join('')}
+    <div class="card" style="margin-top:14px"><div style="font-size:13px;font-weight:500;margin-bottom:8px">💡 Ejemplo</div>
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);line-height:1.8;overflow-x:auto"><span style="color:var(--text3)">// Subir imagen</span><br><span style="color:var(--accent2)">const</span> res = <span style="color:var(--green)">await</span> fetch(<span style="color:var(--amber)">'https://api.damvault.io/v1/images'</span>, {<br>&nbsp;&nbsp;method: <span style="color:var(--amber)">'POST'</span>,<br>&nbsp;&nbsp;headers: { <span style="color:var(--amber)">'Authorization'</span>: <span style="color:var(--amber)">'Bearer ${keys[0]?.key?.slice(0,16)||'dvk_prod_...'}...'</span> },<br>&nbsp;&nbsp;body: formData<br>});<br><span style="color:var(--accent2)">const</span> { id, url } = <span style="color:var(--green)">await</span> res.json();</div>
+    </div>
+  </div>
+  <div id="th" style="display:none">${hooks.map(h=>`<div class="wrow"><div style="width:8px;height:8px;border-radius:50%;background:${h.status==='active'?'var(--green)':'var(--border3)'}"></div><div style="flex:1"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">${h.url}</div><div style="font-size:10px;color:var(--text3)">Eventos: ${h.events.join(', ')}</div></div><button class="btn btn-g" style="font-size:11px;padding:4px 9px" onclick="toast('🧪 Test')">Test</button><button class="btn btn-d" style="font-size:11px;padding:4px 9px" onclick="toast('🗑 Eliminado')">✕</button></div>`).join('')}<button class="btn btn-g" style="margin-top:10px" onclick="toast('➕ Webhook')">+ Agregar</button></div>
+  <div id="te" style="display:none">${[['GET','/v1/images','Listar imágenes'],['GET','/v1/images/:id','Obtener por ID'],['POST','/v1/images','Subir imagen'],['PUT','/v1/images/:id','Actualizar metadata'],['DELETE','/v1/images/:id','Eliminar'],['GET','/v1/collections','Listar colecciones'],['POST','/v1/collections','Crear colección'],['POST','/v1/share','Crear enlace'],['GET','/v1/users','Listar usuarios'],['GET','/v1/analytics','Métricas']].map(([m,p,d])=>`<div class="eprow" onclick="toast('${m} ${p}')"><span class="mth m${m.toLowerCase()}">${m}</span><span style="font-family:'JetBrains Mono',monospace;color:var(--text2);flex:1;font-size:11px">${p}</span><span style="font-size:11px;color:var(--text3)">${d}</span></div>`).join('')}</div>
+  <div id="td" style="display:none"><div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:12px">📚 Documentación</div>
+    ${[['🚀','Inicio rápido','5 minutos para empezar'],['🔐','Auth','API Keys y OAuth 2.0'],['📁','Assets','Upload, metadata, versioning'],['👥','Usuarios','Roles, RBAC, SSO'],['📊','Analytics','Métricas y eventos'],['🔔','Webhooks','Eventos y seguridad HMAC']].map(([ic,t,d])=>`<div style="display:flex;gap:10px;padding:10px;border-radius:var(--r);cursor:pointer;transition:background .15s;margin-bottom:4px" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'" onclick="toast('📖 ${t}')"><span style="font-size:18px">${ic}</span><div><div style="font-size:12px;font-weight:500;margin-bottom:2px">${t}</div><div style="font-size:11px;color:var(--text3)">${d}</div></div><span style="margin-left:auto;color:var(--text3)">→</span></div>`).join('')}
+  </div></div>`;
+}
+function swTab(el,id){const tabs=document.getElementById('apiTabs');if(tabs)tabs.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');['tk','th','te','td'].forEach(x=>{const e=document.getElementById(x);if(e)e.style.display='none';});const t=document.getElementById(id);if(t)t.style.display='block';}
+function newKey(){const name=prompt('Nombre para la API key:');if(!name)return;const keys=DB.get('apikeys')||[];keys.push({id:'k'+Date.now(),name,key:'dvk_'+Math.random().toString(36).slice(2,10)+'_'+Math.random().toString(36).slice(2,10),created:new Date().toISOString().slice(0,10),calls:0,status:'active'});DB.set('apikeys',keys);nav('api');toast('🔑 "'+name+'" creada');}
+function rvkKey(id){DB.set('apikeys',(DB.get('apikeys')||[]).filter(k=>k.id!==id));nav('api');toast('⛔ Key revocada');}
+
+// TRASH
+function rTrash(){
+  const trash=DB.get('trash')||[];
+  return`<div class="ph"><div><div class="pt">Papelera</div><div class="ps">Archivos eliminados permanentemente tras 30 días</div></div><div class="pa">${trash.length?`<button class="btn btn-d" onclick="emptyTrash()">🗑 Vaciar</button>`:''}</div></div>
+  ${trash.length?`<div class="card">${trash.map(t=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+      <div style="width:44px;height:44px;border-radius:7px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${t.fmt==='SVG'?'🎨':t.fmt==='PNG'?'🖼':'📷'}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div><div style="font-size:10px;color:var(--text3);margin-top:2px">${t.size} · ${t.fmt} · ${t.deleted}</div></div>
+      <div style="font-size:10px;color:var(--amber);flex-shrink:0;white-space:nowrap">${t.days} días</div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-s" style="font-size:11px;padding:5px 10px" onclick="restoreT('${t.id}')">↩ Restaurar</button>
+        <button class="btn btn-d" style="font-size:11px;padding:5px 10px" onclick="permDel('${t.id}')">✕</button>
+      </div>
+    </div>`).join('')}</div>`:`<div class="empty"><div class="empty-ic">🗑</div><div class="empty-t">Papelera vacía</div><div class="empty-s">Los archivos eliminados aparecen aquí 30 días antes de borrarse permanentemente.</div></div>`}`;
+}
+function restoreT(id){const trash=DB.get('trash')||[];const item=trash.find(t=>t.id===id);if(!item)return;DB.set('trash',trash.filter(t=>t.id!==id));const imgs=DB.get('images')||[];imgs.unshift({id:'i'+Date.now(),name:item.name,size:item.size,dims:'Restaurado',fmt:item.fmt,tags:['restaurado'],folder:'General',color:'#5b7cf6',user:CU?.id||'u1',date:new Date().toISOString().slice(0,10),desc:'Restaurado de papelera',lic:'Uso interno',versions:[{v:1,date:new Date().toISOString().slice(0,10),size:item.size,note:'Restaurado de papelera'}]});DB.set('images',imgs);nav('trash');updateBadges();toast('✅ '+item.name+' restaurado');}
+function permDel(id){const trash=DB.get('trash')||[];const item=trash.find(t=>t.id===id);DB.set('trash',trash.filter(t=>t.id!==id));nav('trash');updateBadges();toast('🗑 '+item?.name+' eliminado permanentemente');}
+function emptyTrash(){if(!confirm('¿Vaciar la papelera? No se puede deshacer.'))return;DB.set('trash',[]);nav('trash');updateBadges();toast('🗑 Papelera vaciada');}
+
+</script>
+</body>
+</html>
